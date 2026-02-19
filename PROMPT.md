@@ -17,6 +17,27 @@ which are translated into SQL queries, executed against a **PostgreSQL database*
 
 Design a **4-layer architecture** with the following layers:
 
+### New Layers Added
+
+#### Semantic Layer (`api/src/semantic/`)
+Bridges the gap between raw SQL schema and LLM understanding by adding business meaning to tables and columns.
+
+- `SemanticColumn` — display name, plain-English description, example values, sensitivity flag
+- `SemanticTable` — display name, purpose description, common query examples, join hints
+- `SemanticRegistry` — central store of all SemanticTable definitions; pre-seeded with 8 tables: `departments`, `employees`, `employee_info`, `suppliers`, `products`, `customers`, `orders`, `order_items`
+- `SemanticLayer` — merges physical schema from any `DatabaseAdapter` with registry definitions to produce a single LLM-ready context string. Falls back to raw schema for tables with no semantic entry.
+
+#### Database Adapter Interface (`api/src/db/adapters/`)
+Abstracts all database operations behind a single `DatabaseAdapter` ABC so the rest of the application has zero database-specific code.
+
+- `DatabaseAdapter` (abstract) — `connect()`, `disconnect()`, `ping()`, `execute_query()`, `get_tables()`, `get_columns()`, `get_foreign_keys()`, `dialect`
+- `PostgreSQLAdapter` — full production implementation via SQLAlchemy + asyncpg
+- `MySQLAdapter` — implementation via SQLAlchemy + aiomysql
+- `SQLiteAdapter` — implementation via SQLAlchemy + aiosqlite  
+- `AdapterFactory` — reads `DB_TYPE` env var and returns the correct singleton adapter
+
+---
+
 ### Layer 1 — UI Layer
 
 - **React** frontend with `EventSource` for SSE streaming
@@ -36,14 +57,21 @@ Design a **4-layer architecture** with the following layers:
 
 ### Layer 2 — DeepAgent Layer
 
-- **DeepAgent Orchestrator** manages the full agent lifecycle
-- **LLM Backend** (OpenAI GPT-4o / Claude) for:
+- **DeepAgent Orchestrator** — built on **`deepagents.create_deep_agent`** (supervisor + subagent graph)
+  - Supervisor delegates NL queries to a `sql-executor` subagent via LangGraph routing
+  - `init_chat_model(model="openai:gpt-4o")` as the backbone LLM
+  - `execute_sql` registered as a LangChain `@tool` (plain async function) in the sql-executor subagent
+  - `graph.astream_events(version="v2")` for fine-grained event streaming:
+    - `on_chat_model_stream` → `EventType.TOKEN`
+    - `on_tool_start` → `EventType.TOOL_CALL` + `EventType.SQL` + `EventType.THINKING`
+    - `on_tool_end` → re-emits captured `RESULT` / `ERROR` events from CodeActSQLTool
+- **LLM Backend** (`langchain-openai` / `init_chat_model`) for:
   - Natural language understanding
-  - SQL intent parsing
+  - SQL intent parsing via OpenAI tool-calling
   - Result summarization
   - Context-aware multi-turn conversation
-- **Agent Memory** — short-term memory via Redis (last 10 conversation turns)
-- **Tool Registry** — registers and routes tool calls to CodeAct SQL Tool
+- **Agent Memory** — `InMemorySaver` (LangGraph checkpointer) keyed by `thread_id`; last 10 turns persisted to Redis per `session_id`
+- **Tool Registry** — LangChain `@tool`-decorated async functions passed to subagent definition
 
 ### Layer 3 — CodeAct Tool Layer
 
@@ -71,8 +99,37 @@ Design a **4-layer architecture** with the following layers:
 ### Layer 4 — Database Layer
 
 - **PostgreSQL Primary** — read/write, business data tables, port 5432
+  - `departments` — company departments with budget
+  - `employees` — full employee roster (self-referencing manager FK, employment type, status)
+  - `employee_info` — sensitive HR data (DOB, address, emergency contact, bank last 4)
+  - `suppliers` — product vendors / supplier contacts
+  - `products` — product catalogue with SKU, pricing, stock, reorder levels
+  - `customers` — registered customers with loyalty tier (standard/silver/gold/platinum)
+  - `orders` — purchase orders with full status lifecycle
+  - `order_items` — line items with computed `line_total` generated column
 - **PostgreSQL Read Replica** — read-only query execution, analytics
 - **Redis Cache** — caches query results by SHA-256 hash of SQL, with TTL
+
+#### Database Bootstrap Scripts (`db/postgress/`)
+
+| File | Purpose |
+|---|---|
+| `00_run_all.sql` | Master script — runs all files in order + prints row counts |
+| `01_schema.sql` | All `CREATE TABLE`, indexes, FK constraints, `updated_at` triggers |
+| `02_insert_departments.sql` | 10 departments |
+| `03_insert_employees.sql` | 42 employees (C-suite → intern, active/on-leave/terminated) |
+| `04_insert_employee_info.sql` | Extended HR data for all 42 employees |
+| `05_insert_suppliers.sql` | 8 suppliers (US, UK, Germany, China, Mexico) |
+| `06_insert_products.sql` | 28 products across Electronics, Office, Software, Furniture, Accessories |
+| `07_insert_customers.sql` | 30 customers across all loyalty tiers |
+| `08_insert_orders.sql` | 30 orders covering all status states |
+| `09_insert_order_items.sql` | ~65 order line items |
+
+```bash
+# Bootstrap the database
+psql -U postgres -c "CREATE DATABASE chatdb;"
+psql -U postgres -d chatdb -f db/postgress/00_run_all.sql
+```
 
 ---
 
@@ -114,18 +171,20 @@ Design a **4-layer architecture** with the following layers:
 
 ## 🛠️ Tech Stack
 
-| Layer            | Technology                                      |
-|------------------|-------------------------------------------------|
-| Frontend         | React 18, TypeScript, Vite, Tailwind CSS        |
-| SSE Client       | Native `EventSource` API                        |
-| API Gateway      | FastAPI, `sse-starlette`                        |
-| Session Store    | Redis (`redis-py` asyncio)                      |
-| Agent Framework  | DeepAgent                                       |
-| LLM Backend      | OpenAI GPT-4o / Anthropic Claude                |
-| Agent Tool       | CodeAct Agent Tool                              |
-| ORM / DB Driver  | SQLAlchemy (asyncio), asyncpg                   |
-| Database         | PostgreSQL 15 (Primary + Read Replica)          |
-| Result Cache     | Redis                                           |
+| Layer            | Technology                                                     |
+|------------------|----------------------------------------------------------------|
+| Frontend         | React 18, TypeScript, Vite, Tailwind CSS                       |
+| SSE Client       | Native `EventSource` API                                       |
+| API Gateway      | FastAPI, `sse-starlette`                                       |
+| Session Store    | Redis (`redis-py` asyncio)                                     |
+| Agent Framework  | `deepagents>=0.3.8` — `create_deep_agent` (supervisor + subagent graph) |
+| Agent Streaming  | `graph.astream_events(version="v2")` via LangGraph              |
+| LLM Backend      | `init_chat_model("openai:gpt-4o")` via `langchain-openai`       |
+| Agent Tool       | LangChain `@tool` async function → CodeAct SQL Tool             |
+| LangChain Pkgs   | `deepagents>=0.3.8`, `langchain>=0.2`, `langgraph>=0.2`         |
+| ORM / DB Driver  | SQLAlchemy (asyncio), asyncpg / aiomysql / aiosqlite           |
+| Database         | PostgreSQL 15 (Primary + Read Replica)                         |
+| Result Cache     | Redis                                                          |
 
 ---
 
@@ -137,18 +196,38 @@ Design a **4-layer architecture** with the following layers:
 ├── PROMPT.md
 ├── DeepAgent-SQL-Chat-Architecture.drawio
 │
+├── db/
+│   └── postgress/
+│       ├── 00_run_all.sql               ← master bootstrap script
+│       ├── 01_schema.sql                ← DDL: tables, indexes, triggers
+│       ├── 02_insert_departments.sql
+│       ├── 03_insert_employees.sql
+│       ├── 04_insert_employee_info.sql
+│       ├── 05_insert_suppliers.sql
+│       ├── 06_insert_products.sql
+│       ├── 07_insert_customers.sql
+│       ├── 08_insert_orders.sql
+│       └── 09_insert_order_items.sql
+│
 ├── api/
 │   ├── main.py                          ← uvicorn entry point
-│   ├── pyproject.toml                   ← poetry dependencies
+│   ├── requirements.txt                 ← pip dependencies
 │   ├── .env.example                     ← environment variable template
 │   └── src/
 │       ├── main.py                      ← FastAPI app factory + CORS
 │       ├── config/
 │       │   └── settings.py              ← Pydantic BaseSettings
 │       ├── db/
-│       │   ├── engine.py                ← async SQLAlchemy engine + session
-│       │   ├── schema_inspector.py      ← PostgreSQL schema introspection
-│       │   └── query_executor.py        ← safe SELECT-only executor
+│       │   ├── adapters/
+│       │   │   ├── base.py               ← DatabaseAdapter ABC (interface)
+│       │   │   ├── postgres.py           ← PostgreSQL implementation
+│       │   │   ├── mysql.py              ← MySQL implementation
+│       │   │   ├── sqlite.py             ← SQLite implementation
+│       │   │   └── factory.py            ← get_adapter() factory (reads DB_TYPE)
+│       ├── semantic/
+│       │   ├── models.py                 ← SemanticColumn, SemanticTable models
+│       │   ├── registry.py               ← SemanticRegistry + default seed data
+│       │   └── layer.py                  ← SemanticLayer (merges schema + semantics)
 │       ├── cache/
 │       │   └── redis_client.py          ← result cache + session history
 │       ├── agent/
@@ -159,7 +238,8 @@ Design a **4-layer architecture** with the following layers:
 │           ├── schemas.py               ← ChatRequest / ChatInitResponse
 │           └── routes/
 │               ├── chat.py              ← POST /chat + GET /chat/stream/{id}
-│               └── health.py            ← GET /health (postgres + redis check)
+│               ├── health.py             ← GET /health (db adapter + redis check)
+│               └── schema.py             ← GET /schema, GET /schema/{table}
 │
 └── ui/
     ├── index.html
@@ -202,6 +282,9 @@ Design a **4-layer architecture** with the following layers:
 ```env
 # Application
 APP_ENV=development
+
+# Database type — postgresql | mysql | sqlite
+DB_TYPE=postgresql
 APP_HOST=0.0.0.0
 APP_PORT=8000
 CORS_ORIGINS=http://localhost:3000
@@ -240,9 +323,12 @@ DEEPAGENT_TIMEOUT_SECONDS=120
 ```bash
 # API
 cd api
-poetry install
+python -m venv .venv
+.venv\Scripts\activate          # Windows
+# source .venv/bin/activate    # macOS / Linux
+pip install -r requirements.txt
 cp .env.example .env
-poetry run python main.py       # → http://localhost:8000
+python main.py                  # → http://localhost:8000
                                 # → http://localhost:8000/docs (Swagger)
 
 # UI
@@ -267,5 +353,8 @@ Use these follow-up prompts to extend the project:
 | Add authentication | "Based on this PROMPT.md, add JWT authentication to the FastAPI API" |
 | Add CSV export | "Based on this PROMPT.md, add a Download CSV button to ResultTable" |
 | Add tests | "Based on this PROMPT.md, create pytest tests for the CodeAct tool and query executor" |
+| Seed more tables | "Based on this PROMPT.md, add a `projects` and `timesheets` table to the DB scripts and semantic registry" |
+| Add MySQL scripts | "Based on this PROMPT.md, create equivalent MySQL-compatible versions of the db/postgress/ scripts" |
+| Add chart UI | "Based on this PROMPT.md, add a bar/line chart component that renders when the result set has numeric columns" |
 | Add schema browser | "Based on this PROMPT.md, add a sidebar component to the UI showing all PostgreSQL tables and columns" |
 | Multi-database support | "Based on this PROMPT.md, extend the architecture to support both PostgreSQL and MySQL" |
