@@ -1,0 +1,196 @@
+<mxfile host="65bd71144e">
+    <diagram id="deepagent-sql-architecture" name="DeepAgent SQL Chat App">
+        <mxGraphModel dx="2790" dy="694" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1654" pageHeight="1169" math="0" shadow="0">
+            <root>
+                <mxCell id="0"/>
+                <mxCell id="1" parent="0"/>
+                <mxCell id="title" value="DeepAgent SQL Chat Application — Architecture" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=22;fontStyle=1;fontColor=#1a1a2e;" parent="1" vertex="1">
+                    <mxGeometry x="327" y="20" width="1000" height="50" as="geometry"/>
+                </mxCell>
+                <mxCell id="layer-ui-bg" value="" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;opacity=30;arcSize=4;" parent="1" vertex="1">
+                    <mxGeometry x="40" y="90" width="1574" height="160" as="geometry"/>
+                </mxCell>
+                <mxCell id="layer-ui-label" value="UI LAYER" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;fontStyle=1;fontSize=13;fontColor=#084298;rotation=-90;" parent="1" vertex="1">
+                    <mxGeometry x="40" y="130" width="30" height="80" as="geometry"/>
+                </mxCell>
+                <mxCell id="layer-agent-bg" value="" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;opacity=30;arcSize=4;" parent="1" vertex="1">
+                    <mxGeometry x="40" y="280" width="1574" height="200" as="geometry"/>
+                </mxCell>
+                <mxCell id="layer-agent-label" value="DEEPAGENT LAYER" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;fontStyle=1;fontSize=13;fontColor=#7d4e00;rotation=-90;" parent="1" vertex="1">
+                    <mxGeometry x="40" y="330" width="30" height="100" as="geometry"/>
+                </mxCell>
+                <mxCell id="layer-codeact-bg" value="" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;opacity=30;arcSize=4;" parent="1" vertex="1">
+                    <mxGeometry x="40" y="510" width="1574" height="200" as="geometry"/>
+                </mxCell>
+                <mxCell id="layer-codeact-label" value="CODEACT TOOL LAYER" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;fontStyle=1;fontSize=13;fontColor=#1d4a1d;rotation=-90;" parent="1" vertex="1">
+                    <mxGeometry x="40" y="560" width="30" height="120" as="geometry"/>
+                </mxCell>
+                <mxCell id="layer-db-bg" value="" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f8cecc;strokeColor=#b85450;opacity=30;arcSize=4;" parent="1" vertex="1">
+                    <mxGeometry x="40" y="740" width="1574" height="180" as="geometry"/>
+                </mxCell>
+                <mxCell id="layer-db-label" value="DATABASE LAYER" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;fontStyle=1;fontSize=13;fontColor=#6d1f1f;rotation=-90;" parent="1" vertex="1">
+                    <mxGeometry x="40" y="790" width="30" height="80" as="geometry"/>
+                </mxCell>
+                <mxCell id="user" value="User" style="shape=mxgraph.general.user2;fillColor=#dae8fc;strokeColor=#6c8ebf;fontStyle=1;fontSize=12;" parent="1" vertex="1">
+                    <mxGeometry x="100" y="110" width="60" height="80" as="geometry"/>
+                </mxCell>
+                <mxCell id="chat-ui" value="&lt;b&gt;Chat UI&lt;/b&gt;&lt;br&gt;&lt;font color=&#39;#666666&#39;&gt;React + EventSource&lt;/font&gt;&lt;br&gt;&lt;font style=&#39;font-size:10px;&#39; color=&#39;#888888&#39;&gt;• Message Input&lt;br&gt;• Conversation History&lt;br&gt;• SSE Token Streaming&lt;br&gt;• Event-driven State Update&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=12;arcSize=8;align=center;verticalAlign=top;" parent="1" vertex="1">
+                    <mxGeometry x="240" y="100" width="220" height="130" as="geometry"/>
+                </mxCell>
+                <mxCell id="api-gateway" value="&lt;b&gt;API Gateway&lt;/b&gt;&lt;br&gt;&lt;font color=&#39;#666666&#39;&gt;FastAPI / SSE&lt;/font&gt;&lt;br&gt;&lt;font style=&#39;font-size:10px;&#39; color=&#39;#888888&#39;&gt;• POST /api/chat (trigger)&lt;br&gt;• GET /api/chat/stream (SSE)&lt;br&gt;• EventSourceResponse&lt;br&gt;• Auth Middleware&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=12;arcSize=8;align=center;verticalAlign=top;" parent="1" vertex="1">
+                    <mxGeometry x="560" y="100" width="220" height="130" as="geometry"/>
+                </mxCell>
+                <mxCell id="session-mgr" value="&lt;b&gt;Session Manager&lt;/b&gt;&lt;br&gt;&lt;font color=&#39;#666666&#39;&gt;Redis / In-Memory&lt;/font&gt;&lt;br&gt;&lt;font style=&#39;font-size:10px;&#39; color=&#39;#888888&#39;&gt;• Conversation Context&lt;br&gt;• Query History&lt;br&gt;• User Sessions&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=12;arcSize=8;align=center;verticalAlign=top;" parent="1" vertex="1">
+                    <mxGeometry x="880" y="100" width="220" height="130" as="geometry"/>
+                </mxCell>
+                <mxCell id="deepagent-core" value="&lt;b&gt;DeepAgent Orchestrator&lt;/b&gt;&lt;br&gt;&lt;font color=&#39;#666666&#39;&gt;Core Agent Engine&lt;/font&gt;&lt;br&gt;&lt;font style=&#39;font-size:10px;&#39; color=&#39;#888888&#39;&gt;• Task Planning&lt;br&gt;• Tool Selection&lt;br&gt;• Response Synthesis&lt;br&gt;• Multi-step Reasoning&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffe6cc;strokeColor=#d79b00;fontSize=12;arcSize=8;align=center;verticalAlign=top;strokeWidth=2;" parent="1" vertex="1">
+                    <mxGeometry x="240" y="295" width="220" height="160" as="geometry"/>
+                </mxCell>
+                <mxCell id="llm-backend" value="&lt;b&gt;LLM Backend&lt;/b&gt;&lt;br&gt;&lt;font color=&#39;#666666&#39;&gt;Claude / GPT-4o&lt;/font&gt;&lt;br&gt;&lt;font style=&#39;font-size:10px;&#39; color=&#39;#888888&#39;&gt;• NL Understanding&lt;br&gt;• SQL Intent Parsing&lt;br&gt;• Result Summarization&lt;br&gt;• Context Awareness&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffe6cc;strokeColor=#d79b00;fontSize=12;arcSize=8;align=center;verticalAlign=top;" parent="1" vertex="1">
+                    <mxGeometry x="560" y="295" width="220" height="160" as="geometry"/>
+                </mxCell>
+                <mxCell id="memory-store" value="&lt;b&gt;Agent Memory&lt;/b&gt;&lt;br&gt;&lt;font color=&#39;#666666&#39;&gt;Context Window&lt;/font&gt;&lt;br&gt;&lt;font style=&#39;font-size:10px;&#39; color=&#39;#888888&#39;&gt;• Short-term Memory&lt;br&gt;• Tool Call History&lt;br&gt;• Conversation Thread&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffe6cc;strokeColor=#d79b00;fontSize=12;arcSize=8;align=center;verticalAlign=top;" parent="1" vertex="1">
+                    <mxGeometry x="880" y="295" width="220" height="160" as="geometry"/>
+                </mxCell>
+                <mxCell id="tool-registry" value="&lt;b&gt;Tool Registry&lt;/b&gt;&lt;br&gt;&lt;font color=&#39;#666666&#39;&gt;Available Tools&lt;/font&gt;&lt;br&gt;&lt;font style=&#39;font-size:10px;&#39; color=&#39;#888888&#39;&gt;• CodeAct SQL Tool&lt;br&gt;• Schema Inspector&lt;br&gt;• Result Formatter&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffe6cc;strokeColor=#d79b00;fontSize=12;arcSize=8;align=center;verticalAlign=top;" parent="1" vertex="1">
+                    <mxGeometry x="1200" y="295" width="220" height="160" as="geometry"/>
+                </mxCell>
+                <mxCell id="codeact-agent" value="&lt;b&gt;CodeAct Agent Tool&lt;/b&gt;&lt;br&gt;&lt;font color=&#39;#666666&#39;&gt;Executable Code Agent&lt;/font&gt;&lt;br&gt;&lt;font style=&#39;font-size:10px;&#39; color=&#39;#888888&#39;&gt;• SQL Code Generation&lt;br&gt;• Code Execution Engine&lt;br&gt;• Error Handling &amp; Retry&lt;br&gt;• Result Validation&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=12;arcSize=8;align=center;verticalAlign=top;strokeWidth=2;" parent="1" vertex="1">
+                    <mxGeometry x="240" y="525" width="220" height="160" as="geometry"/>
+                </mxCell>
+                <mxCell id="sql-query-builder" value="&lt;b&gt;SQL Query Builder&lt;/b&gt;&lt;br&gt;&lt;font color=&#39;#666666&#39;&gt;Query Constructor&lt;/font&gt;&lt;br&gt;&lt;font style=&#39;font-size:10px;&#39; color=&#39;#888888&#39;&gt;• NL → SQL Translation&lt;br&gt;• Query Optimization&lt;br&gt;• Parameterized Queries&lt;br&gt;• Injection Prevention&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=12;arcSize=8;align=center;verticalAlign=top;" parent="1" vertex="1">
+                    <mxGeometry x="560" y="525" width="220" height="160" as="geometry"/>
+                </mxCell>
+                <mxCell id="db-connection-pool" value="&lt;b&gt;DB Connection Pool&lt;/b&gt;&lt;br&gt;&lt;font color=&#39;#666666&#39;&gt;SQLAlchemy / asyncpg&lt;/font&gt;&lt;br&gt;&lt;font style=&#39;font-size:10px;&#39; color=&#39;#888888&#39;&gt;• Connection Pooling&lt;br&gt;• Async Execution&lt;br&gt;• Transaction Management&lt;br&gt;• Timeout Handling&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=12;arcSize=8;align=center;verticalAlign=top;" parent="1" vertex="1">
+                    <mxGeometry x="880" y="525" width="220" height="160" as="geometry"/>
+                </mxCell>
+                <mxCell id="schema-inspector" value="&lt;b&gt;Schema Inspector&lt;/b&gt;&lt;br&gt;&lt;font color=&#39;#666666&#39;&gt;DB Metadata Tool&lt;/font&gt;&lt;br&gt;&lt;font style=&#39;font-size:10px;&#39; color=&#39;#888888&#39;&gt;• Table Discovery&lt;br&gt;• Column Types&lt;br&gt;• FK Relationships&lt;br&gt;• Schema Caching&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=12;arcSize=8;align=center;verticalAlign=top;" parent="1" vertex="1">
+                    <mxGeometry x="1200" y="525" width="220" height="160" as="geometry"/>
+                </mxCell>
+                <mxCell id="postgres-primary" value="&lt;b&gt;PostgreSQL Primary&lt;/b&gt;&lt;br&gt;&lt;font color=&#39;#666666&#39;&gt;Main Database&lt;/font&gt;&lt;br&gt;&lt;font style=&#39;font-size:10px;&#39; color=&#39;#888888&#39;&gt;• Business Data Tables&lt;br&gt;• Read / Write Access&lt;br&gt;• Port 5432&lt;/font&gt;" style="shape=cylinder3;whiteSpace=wrap;html=1;boundedLbl=1;backgroundOutline=1;size=15;fillColor=#f8cecc;strokeColor=#b85450;fontSize=12;align=center;verticalAlign=top;fontStyle=1;" parent="1" vertex="1">
+                    <mxGeometry x="400" y="755" width="200" height="140" as="geometry"/>
+                </mxCell>
+                <mxCell id="postgres-replica" value="&lt;b&gt;PostgreSQL Replica&lt;/b&gt;&lt;br&gt;&lt;font color=&#39;#666666&#39;&gt;Read Replica&lt;/font&gt;&lt;br&gt;&lt;font style=&#39;font-size:10px;&#39; color=&#39;#888888&#39;&gt;• Analytics Queries&lt;br&gt;• Read-only Access&lt;br&gt;• Port 5432&lt;/font&gt;" style="shape=cylinder3;whiteSpace=wrap;html=1;boundedLbl=1;backgroundOutline=1;size=15;fillColor=#f8cecc;strokeColor=#b85450;fontSize=12;align=center;verticalAlign=top;fontStyle=1;" parent="1" vertex="1">
+                    <mxGeometry x="700" y="755" width="200" height="140" as="geometry"/>
+                </mxCell>
+                <mxCell id="result-cache" value="&lt;b&gt;Query Result Cache&lt;/b&gt;&lt;br&gt;&lt;font color=&#39;#666666&#39;&gt;Redis Cache&lt;/font&gt;&lt;br&gt;&lt;font style=&#39;font-size:10px;&#39; color=&#39;#888888&#39;&gt;• Cached Results&lt;br&gt;• TTL Policies&lt;br&gt;• Cache Invalidation&lt;/font&gt;" style="shape=cylinder3;whiteSpace=wrap;html=1;boundedLbl=1;backgroundOutline=1;size=15;fillColor=#f8cecc;strokeColor=#b85450;fontSize=12;align=center;verticalAlign=top;fontStyle=1;" parent="1" vertex="1">
+                    <mxGeometry x="1000" y="755" width="200" height="140" as="geometry"/>
+                </mxCell>
+                <mxCell id="edge-user-chatui" value="1. Natural Language Query" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;strokeColor=#6c8ebf;fontColor=#084298;fontSize=10;fontStyle=1;" parent="1" source="user" target="chat-ui" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="edge-chatui-apigw" value="2. HTTP POST /api/chat" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;strokeColor=#6c8ebf;fontColor=#084298;fontSize=10;fontStyle=1;" parent="1" source="chat-ui" target="api-gateway" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="edge-apigw-session" value="Load / Save Context" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;strokeColor=#6c8ebf;fontColor=#084298;fontSize=10;dashed=1;" parent="1" source="api-gateway" target="session-mgr" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="edge-apigw-deepagent" value="3. Invoke Agent with Query + Context" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;strokeColor=#d79b00;fontColor=#7d4e00;fontSize=10;fontStyle=1;strokeWidth=2;" parent="1" source="api-gateway" target="deepagent-core" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="edge-deepagent-llm" value="4. Reason / Plan Task" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;strokeColor=#d79b00;fontColor=#7d4e00;fontSize=10;fontStyle=1;" parent="1" source="deepagent-core" target="llm-backend" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="edge-deepagent-memory" value="R/W Context" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;exitX=1;exitY=0.3;exitDx=0;exitDy=0;entryX=0;entryY=0.3;entryDx=0;entryDy=0;strokeColor=#d79b00;fontColor=#7d4e00;fontSize=10;dashed=1;" parent="1" source="llm-backend" target="memory-store" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="edge-deepagent-toolreg" value="5. Select Tool" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;exitX=1;exitY=0.7;exitDx=0;exitDy=0;entryX=0;entryY=0.7;entryDx=0;entryDy=0;strokeColor=#d79b00;fontColor=#7d4e00;fontSize=10;fontStyle=1;dashed=1;" parent="1" source="deepagent-core" target="tool-registry" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="edge-deepagent-codeact" value="6. Invoke CodeAct Tool (NL Query)" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;strokeColor=#82b366;fontColor=#1d4a1d;fontSize=10;fontStyle=1;strokeWidth=2;" parent="1" source="deepagent-core" target="codeact-agent" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="edge-toolreg-schema" value="Inspect Schema" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;strokeColor=#82b366;fontColor=#1d4a1d;fontSize=10;dashed=1;" parent="1" source="tool-registry" target="schema-inspector" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="edge-codeact-sqlbuilder" value="7. Generate SQL" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;strokeColor=#82b366;fontColor=#1d4a1d;fontSize=10;fontStyle=1;" parent="1" source="codeact-agent" target="sql-query-builder" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="edge-sqlbuilder-dbpool" value="8. Execute SQL" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;strokeColor=#82b366;fontColor=#1d4a1d;fontSize=10;fontStyle=1;" parent="1" source="sql-query-builder" target="db-connection-pool" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="edge-schema-sqlbuilder" value="Table/Column Info" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;exitX=0;exitY=0.5;exitDx=0;exitDy=0;entryX=1;entryY=0.3;entryDx=0;entryDy=0;strokeColor=#82b366;fontColor=#1d4a1d;fontSize=10;dashed=1;" parent="1" source="schema-inspector" target="sql-query-builder" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="edge-dbpool-postgres" value="9. Run Query (Write/Read)" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;exitX=0.3;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;strokeColor=#b85450;fontColor=#6d1f1f;fontSize=10;fontStyle=1;strokeWidth=2;" parent="1" source="db-connection-pool" target="postgres-primary" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="edge-dbpool-replica" value="9b. Read-only Queries" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;strokeColor=#b85450;fontColor=#6d1f1f;fontSize=10;fontStyle=1;dashed=1;" parent="1" source="db-connection-pool" target="postgres-replica" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="edge-dbpool-cache" value="Cache Results" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;exitX=0.7;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;strokeColor=#b85450;fontColor=#6d1f1f;fontSize=10;dashed=1;" parent="1" source="db-connection-pool" target="result-cache" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="edge-pg-replication" value="Streaming Replication" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;strokeColor=#b85450;fontColor=#6d1f1f;fontSize=10;dashed=1;" parent="1" source="postgres-primary" target="postgres-replica" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="edge-postgres-return" value="10. Query Results" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;exitX=0.3;exitY=0;exitDx=0;exitDy=0;entryX=0.2;entryY=1;entryDx=0;entryDy=0;strokeColor=#b85450;fontColor=#6d1f1f;fontSize=10;fontStyle=3;strokeWidth=2;" parent="1" source="postgres-primary" target="db-connection-pool" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="edge-codeact-return" value="11. Structured Results" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;exitX=0.3;exitY=0;exitDx=0;exitDy=0;entryX=0.3;entryY=1;entryDx=0;entryDy=0;strokeColor=#82b366;fontColor=#1d4a1d;fontSize=10;fontStyle=3;strokeWidth=2;" parent="1" source="codeact-agent" target="deepagent-core" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="edge-deepagent-return" value="12. Formatted Response" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;exitX=0.7;exitY=0;exitDx=0;exitDy=0;entryX=0.7;entryY=1;entryDx=0;entryDy=0;strokeColor=#d79b00;fontColor=#7d4e00;fontSize=10;fontStyle=3;strokeWidth=2;" parent="1" source="deepagent-core" target="api-gateway" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="edge-apigw-ui-return" value="13. SSE Stream (text/event-stream) → EventSource" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;exitX=0.3;exitY=0;exitDx=0;exitDy=0;entryX=0.7;entryY=0;entryDx=0;entryDy=0;strokeColor=#6c8ebf;fontColor=#084298;fontSize=10;fontStyle=3;strokeWidth=2;" parent="1" source="api-gateway" target="chat-ui" edge="1">
+                    <mxGeometry relative="1" as="geometry">
+                        <Array as="points">
+                            <mxPoint x="670" y="70"/>
+                            <mxPoint x="350" y="70"/>
+                        </Array>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="legend-bg" value="" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f5f5f5;strokeColor=#666666;arcSize=4;" parent="1" vertex="1">
+                    <mxGeometry x="1680" y="135" width="300" height="350" as="geometry"/>
+                </mxCell>
+                <mxCell id="legend-title" value="&lt;b&gt;LEGEND&lt;/b&gt;" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;fontSize=14;fontStyle=1;" parent="1" vertex="1">
+                    <mxGeometry x="1680" y="145" width="300" height="30" as="geometry"/>
+                </mxCell>
+                <mxCell id="leg-ui" value="" style="rounded=1;fillColor=#dae8fc;strokeColor=#6c8ebf;" parent="1" vertex="1">
+                    <mxGeometry x="1740" y="210" width="30" height="20" as="geometry"/>
+                </mxCell>
+                <mxCell id="leg-ui-lbl" value="UI Layer" style="text;html=1;strokeColor=none;fillColor=none;align=left;fontSize=11;" parent="1" vertex="1">
+                    <mxGeometry x="1780" y="210" width="120" height="20" as="geometry"/>
+                </mxCell>
+                <mxCell id="leg-agent" value="" style="rounded=1;fillColor=#ffe6cc;strokeColor=#d79b00;" parent="1" vertex="1">
+                    <mxGeometry x="1740" y="240" width="30" height="20" as="geometry"/>
+                </mxCell>
+                <mxCell id="leg-agent-lbl" value="DeepAgent Layer" style="text;html=1;strokeColor=none;fillColor=none;align=left;fontSize=11;" parent="1" vertex="1">
+                    <mxGeometry x="1780" y="240" width="120" height="20" as="geometry"/>
+                </mxCell>
+                <mxCell id="leg-codeact" value="" style="rounded=1;fillColor=#d5e8d4;strokeColor=#82b366;" parent="1" vertex="1">
+                    <mxGeometry x="1740" y="270" width="30" height="20" as="geometry"/>
+                </mxCell>
+                <mxCell id="leg-codeact-lbl" value="CodeAct Tool Layer" style="text;html=1;strokeColor=none;fillColor=none;align=left;fontSize=11;" parent="1" vertex="1">
+                    <mxGeometry x="1780" y="270" width="140" height="20" as="geometry"/>
+                </mxCell>
+                <mxCell id="leg-db" value="" style="rounded=1;fillColor=#f8cecc;strokeColor=#b85450;" parent="1" vertex="1">
+                    <mxGeometry x="1740" y="300" width="30" height="20" as="geometry"/>
+                </mxCell>
+                <mxCell id="leg-db-lbl" value="Database Layer" style="text;html=1;strokeColor=none;fillColor=none;align=left;fontSize=11;" parent="1" vertex="1">
+                    <mxGeometry x="1780" y="300" width="120" height="20" as="geometry"/>
+                </mxCell>
+                <mxCell id="leg-solid-arrow" value="" style="edgeStyle=orthogonalEdgeStyle;strokeColor=#333333;strokeWidth=2;fontStyle=1;" parent="1" edge="1">
+                    <mxGeometry x="1325" y="280" width="60" height="20" as="geometry">
+                        <Array as="points"/>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="leg-solid-lbl" value="Main Data Flow" style="text;html=1;strokeColor=none;fillColor=none;align=left;fontSize=11;" parent="1" vertex="1">
+                    <mxGeometry x="1780" y="350" width="140" height="20" as="geometry"/>
+                </mxCell>
+                <mxCell id="leg-dashed-arrow" value="" style="edgeStyle=orthogonalEdgeStyle;strokeColor=#333333;dashed=1;" parent="1" edge="1">
+                    <mxGeometry x="1325" y="305" width="60" height="20" as="geometry">
+                        <Array as="points"/>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="leg-dashed-lbl" value="Supporting Flow" style="text;html=1;strokeColor=none;fillColor=none;align=left;fontSize=11;" parent="1" vertex="1">
+                    <mxGeometry x="1780" y="390" width="140" height="20" as="geometry"/>
+                </mxCell>
+                <mxCell id="flow-note" value="&lt;b&gt;Request Flow (1→13):&lt;/b&gt;&lt;br&gt;1. User sends NL query&lt;br&gt;2. HTTP POST /api/chat (trigger)&lt;br&gt;3. Gateway → DeepAgent&lt;br&gt;4. DeepAgent reasons via LLM&lt;br&gt;5. Select CodeAct Tool&lt;br&gt;6. Invoke with NL query&lt;br&gt;7. Generate SQL&lt;br&gt;8. Execute via DB Pool&lt;br&gt;9. Run on PostgreSQL&lt;br&gt;10. Return raw results&lt;br&gt;11. Structured results → Agent&lt;br&gt;12. LLM formats response&lt;br&gt;13. SSE stream → React EventSource" style="text;html=1;strokeColor=#666666;fillColor=#f5f5f5;align=left;verticalAlign=top;fontSize=10;rounded=1;spacingLeft=6;" parent="1" vertex="1">
+                    <mxGeometry x="1670" y="510" width="300" height="265" as="geometry"/>
+                </mxCell>
+            </root>
+        </mxGraphModel>
+    </diagram>
+</mxfile>
