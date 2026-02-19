@@ -194,7 +194,8 @@ psql -U postgres -d chatdb -f db/postgress/00_run_all.sql
 ```
 1.SQL-Query-execution-tool/
 ├── README.md
-├── PROMPT.md
+├── docs/
+│   └── PROMPT.md
 ├── DeepAgent-SQL-Chat-Architecture.drawio
 │
 ├── deploy/                              ← all Docker / container files

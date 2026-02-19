@@ -3,7 +3,6 @@ from contextlib import asynccontextmanager
 import uvicorn
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-
 from src.api.routes import auth, chat, health, schema
 from src.config.settings import get_settings
 from src.db.adapters.factory import get_adapter

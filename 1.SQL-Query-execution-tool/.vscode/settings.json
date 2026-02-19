@@ -1,0 +1,9 @@
+{
+    // Run ruff linter only on actual saved files — prevents it linting chat panel code snippets
+    "ruff.lint.run": "onSave",
+    // Pylance: only analyse files actually open from the workspace
+    "python.analysis.diagnosticMode": "openFilesOnly",
+    // Disable Even Better TOML from validating virtual documents (chat code blocks)
+    "evenBetterToml.formatter.enabled": false,
+    "evenBetterToml.schema.enabled": false
+}
