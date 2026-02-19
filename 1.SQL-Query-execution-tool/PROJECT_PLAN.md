@@ -288,4 +288,4 @@ docker compose up --build
 | 2025-02-19 | 2.2: README.md | 799352e |
 | 2025-02-19 | 3.1–3.5: Pytest setup + tests (CodeAct, DB adapter, SemanticLayer, routes) | 7801a86 |
 | 2025-02-19 | 4.2: CSV export on ResultTable | b8f5aba |
-| 2025-02-19 | 4.3: Schema browser sidebar | — |
+| 2025-02-19 | 4.3: Schema browser sidebar | 516e2bb |
