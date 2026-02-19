@@ -286,3 +286,5 @@ docker compose up --build
 | 2025-02-19 | 1.6–1.12: Chat components + App layout | 3474cc7 |
 | 2025-02-19 | 2.1: .env.example | 8980755 |
 | 2025-02-19 | 2.2: README.md | 799352e |
+| 2025-02-19 | 3.1: Pytest setup (pytest.ini, conftest.py) | — |
+| 2025-02-19 | 3.2–3.5: Tests (CodeAct, DB adapter, SemanticLayer, routes) | — |
