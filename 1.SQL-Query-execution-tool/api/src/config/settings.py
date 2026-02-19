@@ -1,5 +1,8 @@
-from pydantic_settings import BaseSettings, SettingsConfigDict
 from functools import lru_cache
+from typing import Union
+
+from pydantic import field_validator
+from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
 class Settings(BaseSettings):
@@ -13,7 +16,17 @@ class Settings(BaseSettings):
     app_env: str = "development"
     app_host: str = "0.0.0.0"
     app_port: int = 8000
-    cors_origins: list[str] = ["http://localhost:3000"]
+    cors_origins: Union[str, list[str]] = "http://localhost:3000"
+
+    @field_validator("cors_origins", mode="before")
+    @classmethod
+    def parse_cors_origins(cls, v: object) -> list[str]:
+        """Accept comma-separated string from .env (e.g. CORS_ORIGINS=http://localhost:3000)."""
+        if isinstance(v, list):
+            return v
+        if isinstance(v, str):
+            return [x.strip() for x in v.split(",") if x.strip()]
+        return ["http://localhost:3000"]
 
     # ----------------------------------------------------------------
     # Database — generic
@@ -51,12 +64,21 @@ class Settings(BaseSettings):
     llm_provider: str = "openai"
     llm_model: str = "gpt-4o"
     llm_api_key: str = ""
+    llm_base_url: str = ""  # optional; e.g. Qwen/DashScope: https://dashscope.aliyuncs.com/compatible-mode/v1
     llm_max_tokens: int = 4096
     llm_temperature: float = 0.0
 
     # DeepAgent
     deepagent_max_iterations: int = 10
     deepagent_timeout_seconds: int = 120
+
+    # JWT Auth
+    auth_enabled: bool = False
+    jwt_secret: str = "change-me-in-production"
+    jwt_algorithm: str = "HS256"
+    jwt_expire_minutes: int = 60
+    admin_username: str = "admin"
+    admin_password: str = "admin"
 
     # ------------------------------------------------------------------
     # Computed DSNs

@@ -1,10 +1,11 @@
 import json
 import uuid
-from fastapi import APIRouter, Request
+from fastapi import APIRouter, Depends, Request
 from fastapi.responses import JSONResponse
 from sse_starlette.sse import EventSourceResponse
 from src.agent.deep_agent import DeepAgent
 from src.api.schemas import ChatRequest, ChatInitResponse
+from src.auth.jwt import get_current_user
 from src.db.adapters.factory import get_adapter
 
 router = APIRouter(prefix="/chat", tags=["chat"])
@@ -15,7 +16,10 @@ _pending: dict[str, ChatRequest] = {}
 
 
 @router.post("", response_model=ChatInitResponse)
-async def initiate_chat(request: ChatRequest) -> JSONResponse:
+async def initiate_chat(
+    request: ChatRequest,
+    _user: dict = Depends(get_current_user),
+) -> JSONResponse:
     """
     Accept the user query.
     Returns a stream_url the UI opens via EventSource.
@@ -31,7 +35,11 @@ async def initiate_chat(request: ChatRequest) -> JSONResponse:
 
 
 @router.get("/stream/{stream_id}")
-async def stream_chat(stream_id: str, request: Request) -> EventSourceResponse:
+async def stream_chat(
+    stream_id: str,
+    request: Request,
+    _user: dict = Depends(get_current_user),
+) -> EventSourceResponse:
     """
     SSE endpoint — streams DeepAgent events (text/event-stream) to the UI.
     The adapter is resolved by the factory; no route knows which DB is used.

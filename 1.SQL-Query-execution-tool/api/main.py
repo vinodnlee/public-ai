@@ -4,7 +4,7 @@ import uvicorn
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from src.api.routes import chat, health, schema
+from src.api.routes import auth, chat, health, schema
 from src.config.settings import get_settings
 from src.db.adapters.factory import get_adapter
 
@@ -24,7 +24,8 @@ def create_app() -> FastAPI:
     app = FastAPI(
         title="DeepAgent SQL Chat API",
         version="0.1.0",
-        docs_url="/docs" if settings.app_env == "development" else None,
+        # 非 production 时启用 Swagger，便于本地调试
+        docs_url="/docs" if settings.app_env != "production" else None,
         lifespan=lifespan,
     )
 
@@ -36,6 +37,7 @@ def create_app() -> FastAPI:
         allow_headers=["*"],
     )
 
+    app.include_router(auth.router,   prefix="/api")
     app.include_router(chat.router,   prefix="/api")
     app.include_router(health.router, prefix="/api")
     app.include_router(schema.router, prefix="/api")

@@ -18,6 +18,7 @@ from typing import Any, AsyncGenerator
 from deepagents import create_deep_agent  # type: ignore
 from langchain.chat_models import init_chat_model  # type: ignore
 from langchain_core.tools import tool as lc_tool
+from langchain_openai import ChatOpenAI  # type: ignore
 from langgraph.checkpoint.memory import InMemorySaver  # type: ignore
 
 from src.agent.codeact_tool import CodeActSQLTool
@@ -141,8 +142,18 @@ class DeepAgent:
 
     async def _build_graph(self, schema_context: str):
         """Build (or rebuild) the deepagents supervisor graph."""
-        model_name = f"openai:{settings.llm_model}"
-        model = init_chat_model(model=model_name)
+        if settings.llm_base_url:
+            # OpenAI-compatible endpoint (e.g. Qwen/DashScope)
+            model = ChatOpenAI(
+                model=settings.llm_model,
+                api_key=settings.llm_api_key,
+                base_url=settings.llm_base_url.rstrip("/"),
+                max_tokens=settings.llm_max_tokens,
+                temperature=settings.llm_temperature,
+            )
+        else:
+            model_name = f"openai:{settings.llm_model}"
+            model = init_chat_model(model=model_name)
 
         sql_tool = self._make_execute_sql_tool()
 
@@ -199,13 +210,42 @@ class DeepAgent:
 
         yield AgentEvent(type=EventType.THINKING, content="Analyzing your question...")
 
-        schema_context = await self._codeact.get_schema_context()
+        try:
+            schema_context = await self._codeact.get_schema_context()
+        except OSError as e:
+            yield AgentEvent(
+                type=EventType.ERROR,
+                content=(
+                    "Database connection failed. Please ensure PostgreSQL is running "
+                    "(e.g. start with: docker compose -f deploy/docker-compose.local.yml up -d). "
+                    f"Detail: {e!s}"
+                ),
+            )
+            yield AgentEvent(type=EventType.DONE)
+            return
+        except Exception as e:
+            yield AgentEvent(
+                type=EventType.ERROR,
+                content=f"Failed to load schema: {e!s}",
+            )
+            yield AgentEvent(type=EventType.DONE)
+            return
+
         graph = await self._build_graph(schema_context)
 
         yield AgentEvent(type=EventType.THINKING, content="Generating SQL query...")
 
+        # Load conversation history from Redis so the model has context across turns
+        history = await get_session_history(session_id) or []
+        messages = [
+            {"role": m["role"], "content": m["content"]}
+            for m in history
+            if isinstance(m.get("role"), str) and isinstance(m.get("content"), str)
+        ]
+        messages.append({"role": "user", "content": query})
+
         config = {"configurable": {"thread_id": thread_id}}
-        input_payload = {"messages": [{"role": "user", "content": query}]}
+        input_payload = {"messages": messages}
 
         full_response_parts: list[str] = []
 
@@ -242,12 +282,10 @@ class DeepAgent:
                     yield captured
 
         # ── Persist conversation turn to Redis ───────────────────────────
-        history = await get_session_history(session_id) or []
         full_response = "".join(full_response_parts)
-        history.append({"role": "user", "content": query})
-        history.append({"role": "assistant", "content": full_response})
-        # keep last 10 turns
-        await set_session_history(session_id, history[-20:])
+        new_history = messages + [{"role": "assistant", "content": full_response}]
+        # keep last 10 turns (20 messages)
+        await set_session_history(session_id, new_history[-20:])
 
         yield AgentEvent(type=EventType.DONE)
 
