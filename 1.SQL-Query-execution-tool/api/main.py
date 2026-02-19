@@ -24,7 +24,8 @@ def create_app() -> FastAPI:
     app = FastAPI(
         title="DeepAgent SQL Chat API",
         version="0.1.0",
-        docs_url="/docs" if settings.app_env == "development" else None,
+        # 非 production 时启用 Swagger，便于本地调试
+        docs_url="/docs" if settings.app_env != "production" else None,
         lifespan=lifespan,
     )
 

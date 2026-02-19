@@ -64,6 +64,7 @@ class Settings(BaseSettings):
     llm_provider: str = "openai"
     llm_model: str = "gpt-4o"
     llm_api_key: str = ""
+    llm_base_url: str = ""  # optional; e.g. Qwen/DashScope: https://dashscope.aliyuncs.com/compatible-mode/v1
     llm_max_tokens: int = 4096
     llm_temperature: float = 0.0
 

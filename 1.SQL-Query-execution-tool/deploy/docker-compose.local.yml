@@ -1,0 +1,46 @@
+# ─────────────────────────────────────────────────────────────────────────────
+# Local dev: only PostgreSQL + Redis. Run API and UI on your host.
+#
+# Usage (from this deploy/ directory):
+#   docker compose -f docker-compose.local.yml up -d --build
+#
+# Then in api/.env:
+#   POSTGRES_HOST=localhost
+#   REDIS_HOST=localhost
+#   (rest as in .env.example)
+# ─────────────────────────────────────────────────────────────────────────────
+
+services:
+  db:
+    build:
+      context: ..
+      dockerfile: deploy/db/Dockerfile
+    container_name: sqlchat_db_local
+    environment:
+      POSTGRES_DB: chatdb
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    ports:
+      - "5432:5432"
+    volumes:
+      - pg_data_local:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d chatdb"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+      start_period: 15s
+
+  redis:
+    image: redis:7-alpine
+    container_name: sqlchat_redis_local
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
+volumes:
+  pg_data_local:
