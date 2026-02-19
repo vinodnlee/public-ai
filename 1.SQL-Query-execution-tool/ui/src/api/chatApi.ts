@@ -38,20 +38,21 @@ export async function initiateChat(
 
 /**
  * Open EventSource for stream_url and yield AgentEvents.
- * Caller must close the EventSource when done.
+ * onEvent receives (event, closeStream) — call closeStream() when done (e.g. on type 'done').
  */
 export function openEventStream(
   streamUrl: string,
-  onEvent: (event: AgentEvent) => void,
+  onEvent: (event: AgentEvent, closeStream: () => void) => void,
   onError?: (err: Event) => void
 ): EventSource {
   const url = streamUrl.startsWith('http') ? streamUrl : `${API_BASE}${streamUrl}`
   const es = new EventSource(url)
+  const closeStream = () => es.close()
 
   es.onmessage = (e) => {
     try {
       const data = JSON.parse(e.data) as AgentEvent
-      onEvent(data)
+      onEvent(data, closeStream)
     } catch (err) {
       console.error('Failed to parse SSE event:', err)
     }
