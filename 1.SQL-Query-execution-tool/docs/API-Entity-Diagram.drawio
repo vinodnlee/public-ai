@@ -1,0 +1,396 @@
+<mxGraphModel dx="1600" dy="900" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1900" pageHeight="1200" math="0" shadow="0">
+  <root>
+    <mxCell id="0" />
+    <mxCell id="1" parent="0" />
+
+    <!-- ===== TITLE ===== -->
+    <mxCell id="title" value="DeepAgent SQL Chat — API Layer Entity Diagram" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;overflow=hidden;fontSize=20;fontStyle=1;fontColor=#1e293b;" vertex="1" parent="1">
+      <mxGeometry x="400" y="20" width="1000" height="40" as="geometry" />
+    </mxCell>
+
+    <!-- ===== SWIMLANE LABELS ===== -->
+    <mxCell id="lane-routes" value="src/api/routes &amp; schemas" style="text;html=1;strokeColor=none;fillColor=#dbeafe;align=center;verticalAlign=middle;fontSize=11;fontStyle=1;fontColor=#1e40af;rounded=1;" vertex="1" parent="1">
+      <mxGeometry x="40" y="75" width="220" height="30" as="geometry" />
+    </mxCell>
+    <mxCell id="lane-agent" value="src/agent" style="text;html=1;strokeColor=none;fillColor=#dcfce7;align=center;verticalAlign=middle;fontSize=11;fontStyle=1;fontColor=#166534;rounded=1;" vertex="1" parent="1">
+      <mxGeometry x="480" y="75" width="220" height="30" as="geometry" />
+    </mxCell>
+    <mxCell id="lane-semantic" value="src/semantic" style="text;html=1;strokeColor=none;fillColor=#fef9c3;align=center;verticalAlign=middle;fontSize=11;fontStyle=1;fontColor=#854d0e;rounded=1;" vertex="1" parent="1">
+      <mxGeometry x="920" y="75" width="220" height="30" as="geometry" />
+    </mxCell>
+    <mxCell id="lane-db" value="src/db/adapters" style="text;html=1;strokeColor=none;fillColor=#fce7f3;align=center;verticalAlign=middle;fontSize=11;fontStyle=1;fontColor=#9d174d;rounded=1;" vertex="1" parent="1">
+      <mxGeometry x="1360" y="75" width="220" height="30" as="geometry" />
+    </mxCell>
+    <mxCell id="lane-cache" value="src/cache &amp; config" style="text;html=1;strokeColor=none;fillColor=#f3e8ff;align=center;verticalAlign=middle;fontSize=11;fontStyle=1;fontColor=#6b21a8;rounded=1;" vertex="1" parent="1">
+      <mxGeometry x="920" y="650" width="220" height="30" as="geometry" />
+    </mxCell>
+
+
+    <!-- ================================================================ -->
+    <!-- ROUTES & SCHEMAS LANE                                            -->
+    <!-- ================================================================ -->
+
+    <!-- ChatRequest -->
+    <mxCell id="ChatRequest" value="&lt;b&gt;ChatRequest&lt;/b&gt;&lt;hr/&gt;+ query: str [1..2000]&lt;br/&gt;+ session_id: str [1..128]" style="text;html=1;strokeColor=#1d4ed8;fillColor=#eff6ff;align=left;verticalAlign=top;spacingLeft=8;spacingTop=4;overflow=hidden;rotatable=0;fontSize=11;rounded=1;" vertex="1" parent="1">
+      <mxGeometry x="40" y="120" width="220" height="70" as="geometry" />
+    </mxCell>
+
+    <!-- ChatInitResponse -->
+    <mxCell id="ChatInitResponse" value="&lt;b&gt;ChatInitResponse&lt;/b&gt;&lt;hr/&gt;+ session_id: str&lt;br/&gt;+ stream_url: str" style="text;html=1;strokeColor=#1d4ed8;fillColor=#eff6ff;align=left;verticalAlign=top;spacingLeft=8;spacingTop=4;overflow=hidden;rotatable=0;fontSize=11;rounded=1;" vertex="1" parent="1">
+      <mxGeometry x="40" y="230" width="220" height="65" as="geometry" />
+    </mxCell>
+
+    <!-- ChatRouter -->
+    <mxCell id="ChatRouter" value="&lt;b&gt;&lt;&lt;router&gt;&gt; ChatRouter&lt;/b&gt;&lt;hr/&gt;+ POST /chat → ChatInitResponse&lt;br/&gt;+ GET /chat/stream/{id} → SSE&lt;br/&gt;- _pending: dict[str, ChatRequest]" style="text;html=1;strokeColor=#1d4ed8;fillColor=#dbeafe;align=left;verticalAlign=top;spacingLeft=8;spacingTop=4;overflow=hidden;rotatable=0;fontSize=11;rounded=1;" vertex="1" parent="1">
+      <mxGeometry x="40" y="340" width="220" height="80" as="geometry" />
+    </mxCell>
+
+    <!-- HealthRouter -->
+    <mxCell id="HealthRouter" value="&lt;b&gt;&lt;&lt;router&gt;&gt; HealthRouter&lt;/b&gt;&lt;hr/&gt;+ GET /health → dict" style="text;html=1;strokeColor=#1d4ed8;fillColor=#dbeafe;align=left;verticalAlign=top;spacingLeft=8;spacingTop=4;overflow=hidden;rotatable=0;fontSize=11;rounded=1;" vertex="1" parent="1">
+      <mxGeometry x="40" y="470" width="220" height="55" as="geometry" />
+    </mxCell>
+
+    <!-- SchemaRouter -->
+    <mxCell id="SchemaRouter" value="&lt;b&gt;&lt;&lt;router&gt;&gt; SchemaRouter&lt;/b&gt;&lt;hr/&gt;+ GET /schema → list[dict]&lt;br/&gt;+ GET /schema/{table} → dict" style="text;html=1;strokeColor=#1d4ed8;fillColor=#dbeafe;align=left;verticalAlign=top;spacingLeft=8;spacingTop=4;overflow=hidden;rotatable=0;fontSize=11;rounded=1;" vertex="1" parent="1">
+      <mxGeometry x="40" y="570" width="220" height="65" as="geometry" />
+    </mxCell>
+
+    <!-- FastAPI app (main.py) -->
+    <mxCell id="FastAPIApp" value="&lt;b&gt;&lt;&lt;app&gt;&gt; FastAPI (main.py)&lt;/b&gt;&lt;hr/&gt;+ create_app() → FastAPI&lt;br/&gt;+ lifespan: asynccontextmanager&lt;br/&gt;+ CORSMiddleware&lt;br/&gt;+ prefix=/api" style="text;html=1;strokeColor=#1d4ed8;fillColor=#bfdbfe;align=left;verticalAlign=top;spacingLeft=8;spacingTop=4;overflow=hidden;rotatable=0;fontSize=11;rounded=1;" vertex="1" parent="1">
+      <mxGeometry x="40" y="690" width="220" height="90" as="geometry" />
+    </mxCell>
+
+
+    <!-- ================================================================ -->
+    <!-- AGENT LANE                                                        -->
+    <!-- ================================================================ -->
+
+    <!-- EventType -->
+    <mxCell id="EventType" value="&lt;b&gt;&lt;&lt;enum&gt;&gt; EventType&lt;/b&gt;&lt;hr/&gt;THINKING&lt;br/&gt;TOOL_CALL&lt;br/&gt;SQL&lt;br/&gt;EXECUTING&lt;br/&gt;RESULT&lt;br/&gt;TOKEN&lt;br/&gt;ERROR&lt;br/&gt;DONE" style="text;html=1;strokeColor=#15803d;fillColor=#f0fdf4;align=left;verticalAlign=top;spacingLeft=8;spacingTop=4;overflow=hidden;rotatable=0;fontSize=11;rounded=1;" vertex="1" parent="1">
+      <mxGeometry x="480" y="120" width="165" height="165" as="geometry" />
+    </mxCell>
+
+    <!-- AgentEvent -->
+    <mxCell id="AgentEvent" value="&lt;b&gt;AgentEvent&lt;/b&gt; (Pydantic)&lt;hr/&gt;+ type: EventType&lt;br/&gt;+ content: str | None&lt;br/&gt;+ tool: str | None&lt;br/&gt;+ input: str | None&lt;br/&gt;+ rows: list[dict] | None&lt;br/&gt;+ columns: list[str] | None&lt;br/&gt;+ row_count: int | None" style="text;html=1;strokeColor=#15803d;fillColor=#dcfce7;align=left;verticalAlign=top;spacingLeft=8;spacingTop=4;overflow=hidden;rotatable=0;fontSize=11;rounded=1;" vertex="1" parent="1">
+      <mxGeometry x="680" y="120" width="200" height="165" as="geometry" />
+    </mxCell>
+
+    <!-- CodeActSQLTool -->
+    <mxCell id="CodeActSQLTool" value="&lt;b&gt;CodeActSQLTool&lt;/b&gt;&lt;hr/&gt;+ TOOL_NAME: str = &quot;codeact_sql&quot;&lt;br/&gt;- _adapter: DatabaseAdapter&lt;br/&gt;- _semantic_layer: SemanticLayer&lt;br/&gt;&lt;hr/&gt;+ run(nl_query, sql) → AsyncGen[AgentEvent]&lt;br/&gt;- _validate_sql(sql) → str&lt;br/&gt;- _format_result(result) → str" style="text;html=1;strokeColor=#15803d;fillColor=#bbf7d0;align=left;verticalAlign=top;spacingLeft=8;spacingTop=4;overflow=hidden;rotatable=0;fontSize=11;rounded=1;" vertex="1" parent="1">
+      <mxGeometry x="480" y="340" width="270" height="130" as="geometry" />
+    </mxCell>
+
+    <!-- DeepAgent -->
+    <mxCell id="DeepAgent" value="&lt;b&gt;DeepAgent&lt;/b&gt;&lt;hr/&gt;- _adapter: DatabaseAdapter&lt;br/&gt;- _graph: CompiledGraph &lt;i&gt;(deepagents)&lt;/i&gt;&lt;br/&gt;- _checkpointer: InMemorySaver&lt;br/&gt;&lt;hr/&gt;+ run(query, session_id) → AsyncGen[AgentEvent]&lt;br/&gt;+ _build_graph() → CompiledGraph&lt;br/&gt;+ _stream_events(input, config) → AsyncGen" style="text;html=1;strokeColor=#15803d;fillColor=#86efac;align=left;verticalAlign=top;spacingLeft=8;spacingTop=4;overflow=hidden;rotatable=0;fontSize=11;rounded=1;" vertex="1" parent="1">
+      <mxGeometry x="480" y="530" width="300" height="140" as="geometry" />
+    </mxCell>
+
+    <!-- execute_sql @lc_tool -->
+    <mxCell id="execute_sql" value="&lt;b&gt;&lt;&lt;@lc_tool&gt;&gt; execute_sql&lt;/b&gt;&lt;hr/&gt;+ nl_query: str&lt;br/&gt;+ sql: str&lt;br/&gt;&lt;hr/&gt;Wraps CodeActSQLTool.run()&lt;br/&gt;Registered in sql-executor subagent" style="text;html=1;strokeColor=#15803d;fillColor=#4ade80;align=left;verticalAlign=top;spacingLeft=8;spacingTop=4;overflow=hidden;rotatable=0;fontSize=11;rounded=1;" vertex="1" parent="1">
+      <mxGeometry x="480" y="730" width="270" height="105" as="geometry" />
+    </mxCell>
+
+
+    <!-- ================================================================ -->
+    <!-- SEMANTIC LANE                                                     -->
+    <!-- ================================================================ -->
+
+    <!-- SemanticColumn -->
+    <mxCell id="SemanticColumn" value="&lt;b&gt;SemanticColumn&lt;/b&gt; (Pydantic)&lt;hr/&gt;+ name: str&lt;br/&gt;+ display_name: str&lt;br/&gt;+ description: str&lt;br/&gt;+ example_values: list[str]&lt;br/&gt;+ is_primary_key: bool&lt;br/&gt;+ is_foreign_key: bool&lt;br/&gt;+ is_sensitive: bool" style="text;html=1;strokeColor=#a16207;fillColor=#fefce8;align=left;verticalAlign=top;spacingLeft=8;spacingTop=4;overflow=hidden;rotatable=0;fontSize=11;rounded=1;" vertex="1" parent="1">
+      <mxGeometry x="920" y="120" width="210" height="160" as="geometry" />
+    </mxCell>
+
+    <!-- SemanticTable -->
+    <mxCell id="SemanticTable" value="&lt;b&gt;SemanticTable&lt;/b&gt; (Pydantic)&lt;hr/&gt;+ name: str&lt;br/&gt;+ display_name: str&lt;br/&gt;+ description: str&lt;br/&gt;+ columns: list[SemanticColumn]&lt;br/&gt;+ common_queries: list[str]&lt;br/&gt;+ joins: list[str]&lt;br/&gt;&lt;hr/&gt;+ get_column(name) → SemanticColumn | None&lt;br/&gt;+ to_prompt_fragment() → str" style="text;html=1;strokeColor=#a16207;fillColor=#fef9c3;align=left;verticalAlign=top;spacingLeft=8;spacingTop=4;overflow=hidden;rotatable=0;fontSize=11;rounded=1;" vertex="1" parent="1">
+      <mxGeometry x="1160" y="120" width="220" height="195" as="geometry" />
+    </mxCell>
+
+    <!-- SemanticRegistry -->
+    <mxCell id="SemanticRegistry" value="&lt;b&gt;SemanticRegistry&lt;/b&gt;&lt;hr/&gt;- _tables: dict[str, SemanticTable]&lt;br/&gt;&lt;hr/&gt;+ register(table: SemanticTable)&lt;br/&gt;+ get(name: str) → SemanticTable | None&lt;br/&gt;+ all_tables() → list[SemanticTable]&lt;br/&gt;+ DEFAULT_REGISTRY (8 tables pre-seeded)" style="text;html=1;strokeColor=#a16207;fillColor=#fde68a;align=left;verticalAlign=top;spacingLeft=8;spacingTop=4;overflow=hidden;rotatable=0;fontSize=11;rounded=1;" vertex="1" parent="1">
+      <mxGeometry x="920" y="360" width="270" height="110" as="geometry" />
+    </mxCell>
+
+    <!-- SemanticLayer -->
+    <mxCell id="SemanticLayer" value="&lt;b&gt;SemanticLayer&lt;/b&gt;&lt;hr/&gt;- _adapter: DatabaseAdapter&lt;br/&gt;- _registry: SemanticRegistry&lt;br/&gt;&lt;hr/&gt;+ build_context() → str&lt;br/&gt;+ list_tables() → list[dict]&lt;br/&gt;+ enrich_table(name) → dict" style="text;html=1;strokeColor=#a16207;fillColor=#fbbf24;align=left;verticalAlign=top;spacingLeft=8;spacingTop=4;overflow=hidden;rotatable=0;fontSize=11;rounded=1;" vertex="1" parent="1">
+      <mxGeometry x="920" y="540" width="250" height="110" as="geometry" />
+    </mxCell>
+
+
+    <!-- ================================================================ -->
+    <!-- DB ADAPTERS LANE                                                  -->
+    <!-- ================================================================ -->
+
+    <!-- DatabaseAdapter (ABC) -->
+    <mxCell id="DatabaseAdapter" value="&lt;b&gt;&lt;&lt;abstract&gt;&gt; DatabaseAdapter&lt;/b&gt;&lt;hr/&gt;+ connect() → None&lt;br/&gt;+ disconnect() → None&lt;br/&gt;+ ping() → bool&lt;br/&gt;+ execute_query(sql) → dict&lt;br/&gt;+ get_tables() → list[str]&lt;br/&gt;+ get_columns(table) → list[dict]&lt;br/&gt;+ get_foreign_keys(table) → list[dict]&lt;br/&gt;+ dialect: str" style="text;html=1;strokeColor=#9d174d;fillColor=#fdf2f8;align=left;verticalAlign=top;spacingLeft=8;spacingTop=4;overflow=hidden;rotatable=0;fontSize=11;rounded=1;" vertex="1" parent="1">
+      <mxGeometry x="1360" y="120" width="240" height="195" as="geometry" />
+    </mxCell>
+
+    <!-- PostgreSQLAdapter -->
+    <mxCell id="PostgreSQLAdapter" value="&lt;b&gt;PostgreSQLAdapter&lt;/b&gt;&lt;hr/&gt;- engine: AsyncEngine (asyncpg)&lt;br/&gt;- pool_size: int&lt;br/&gt;- max_overflow: int&lt;br/&gt;&lt;hr/&gt;Implements DatabaseAdapter" style="text;html=1;strokeColor=#9d174d;fillColor=#fce7f3;align=left;verticalAlign=top;spacingLeft=8;spacingTop=4;overflow=hidden;rotatable=0;fontSize=11;rounded=1;" vertex="1" parent="1">
+      <mxGeometry x="1360" y="380" width="220" height="100" as="geometry" />
+    </mxCell>
+
+    <!-- MySQLAdapter -->
+    <mxCell id="MySQLAdapter" value="&lt;b&gt;MySQLAdapter&lt;/b&gt;&lt;hr/&gt;- engine: AsyncEngine (aiomysql)&lt;br/&gt;&lt;hr/&gt;Implements DatabaseAdapter" style="text;html=1;strokeColor=#9d174d;fillColor=#fce7f3;align=left;verticalAlign=top;spacingLeft=8;spacingTop=4;overflow=hidden;rotatable=0;fontSize=11;rounded=1;" vertex="1" parent="1">
+      <mxGeometry x="1360" y="510" width="220" height="80" as="geometry" />
+    </mxCell>
+
+    <!-- SQLiteAdapter -->
+    <mxCell id="SQLiteAdapter" value="&lt;b&gt;SQLiteAdapter&lt;/b&gt;&lt;hr/&gt;- engine: AsyncEngine (aiosqlite)&lt;br/&gt;&lt;hr/&gt;Implements DatabaseAdapter" style="text;html=1;strokeColor=#9d174d;fillColor=#fce7f3;align=left;verticalAlign=top;spacingLeft=8;spacingTop=4;overflow=hidden;rotatable=0;fontSize=11;rounded=1;" vertex="1" parent="1">
+      <mxGeometry x="1360" y="620" width="220" height="80" as="geometry" />
+    </mxCell>
+
+    <!-- AdapterFactory -->
+    <mxCell id="AdapterFactory" value="&lt;b&gt;&lt;&lt;factory&gt;&gt; AdapterFactory&lt;/b&gt;&lt;hr/&gt;+ get_adapter() → DatabaseAdapter&lt;br/&gt;reads DB_TYPE env var&lt;br/&gt;returns singleton" style="text;html=1;strokeColor=#9d174d;fillColor=#fbcfe8;align=left;verticalAlign=top;spacingLeft=8;spacingTop=4;overflow=hidden;rotatable=0;fontSize=11;rounded=1;" vertex="1" parent="1">
+      <mxGeometry x="1360" y="730" width="220" height="80" as="geometry" />
+    </mxCell>
+
+
+    <!-- ================================================================ -->
+    <!-- CACHE & CONFIG LANE                                              -->
+    <!-- ================================================================ -->
+
+    <!-- Settings -->
+    <mxCell id="Settings" value="&lt;b&gt;Settings&lt;/b&gt; (Pydantic BaseSettings)&lt;hr/&gt;+ app_env, app_host, app_port&lt;br/&gt;+ cors_origins: list[str]&lt;br/&gt;+ db_type: str&lt;br/&gt;+ postgres_host/port/db/user/pw&lt;br/&gt;+ mysql_host/port/db/user/pw&lt;br/&gt;+ sqlite_path: str&lt;br/&gt;+ redis_host/port/db/ttl&lt;br/&gt;+ llm_provider/model/api_key&lt;br/&gt;+ deepagent_max_iterations&lt;br/&gt;&lt;hr/&gt;+ get_settings() → Settings (cached)" style="text;html=1;strokeColor=#6b21a8;fillColor=#f5f3ff;align=left;verticalAlign=top;spacingLeft=8;spacingTop=4;overflow=hidden;rotatable=0;fontSize=11;rounded=1;" vertex="1" parent="1">
+      <mxGeometry x="920" y="690" width="260" height="210" as="geometry" />
+    </mxCell>
+
+    <!-- RedisClient -->
+    <mxCell id="RedisClient" value="&lt;b&gt;&lt;&lt;module&gt;&gt; redis_client&lt;/b&gt;&lt;hr/&gt;- _redis: aioredis.Redis | None&lt;br/&gt;&lt;hr/&gt;+ get_redis() → aioredis.Redis&lt;br/&gt;+ get_cached_result(sql) → dict | None&lt;br/&gt;+ set_cached_result(sql, result)&lt;br/&gt;+ get_session_history(session_id)&lt;br/&gt;+ set_session_history(session_id, msgs)&lt;br/&gt;key: SHA-256(sql) | TTL: redis_ttl_seconds" style="text;html=1;strokeColor=#6b21a8;fillColor=#ede9fe;align=left;verticalAlign=top;spacingLeft=8;spacingTop=4;overflow=hidden;rotatable=0;fontSize=11;rounded=1;" vertex="1" parent="1">
+      <mxGeometry x="1210" y="690" width="270" height="170" as="geometry" />
+    </mxCell>
+
+
+    <!-- ================================================================ -->
+    <!-- RELATIONSHIPS                                                     -->
+    <!-- ================================================================ -->
+
+    <!-- ChatRequest → ChatRouter (uses) -->
+    <mxCell id="e1" style="edgeStyle=orthogonalEdgeStyle;rounded=0;strokeColor=#1d4ed8;fontSize=10;" edge="1" source="ChatRouter" target="ChatRequest" parent="1">
+      <mxGeometry relative="1" as="geometry" />
+    </mxCell>
+    <mxCell id="e1l" value="accepts" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;fontSize=9;" vertex="1" connectable="0" parent="e1">
+      <mxGeometry relative="0.5" as="geometry" />
+    </mxCell>
+
+    <!-- ChatRouter → ChatInitResponse -->
+    <mxCell id="e2" style="edgeStyle=orthogonalEdgeStyle;rounded=0;strokeColor=#1d4ed8;fontSize=10;" edge="1" source="ChatRouter" target="ChatInitResponse" parent="1">
+      <mxGeometry relative="1" as="geometry" />
+    </mxCell>
+    <mxCell id="e2l" value="returns" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;fontSize=9;" vertex="1" connectable="0" parent="e2">
+      <mxGeometry relative="0.5" as="geometry" />
+    </mxCell>
+
+    <!-- FastAPIApp → ChatRouter -->
+    <mxCell id="e3" style="edgeStyle=orthogonalEdgeStyle;rounded=0;strokeColor=#1d4ed8;dashed=1;fontSize=10;" edge="1" source="FastAPIApp" target="ChatRouter" parent="1">
+      <mxGeometry relative="1" as="geometry" />
+    </mxCell>
+    <mxCell id="e3l" value="include_router" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;fontSize=9;" vertex="1" connectable="0" parent="e3">
+      <mxGeometry relative="0.5" as="geometry" />
+    </mxCell>
+
+    <!-- FastAPIApp → HealthRouter -->
+    <mxCell id="e4" style="edgeStyle=orthogonalEdgeStyle;rounded=0;strokeColor=#1d4ed8;dashed=1;fontSize=10;" edge="1" source="FastAPIApp" target="HealthRouter" parent="1">
+      <mxGeometry relative="1" as="geometry" />
+    </mxCell>
+
+    <!-- FastAPIApp → SchemaRouter -->
+    <mxCell id="e5" style="edgeStyle=orthogonalEdgeStyle;rounded=0;strokeColor=#1d4ed8;dashed=1;fontSize=10;" edge="1" source="FastAPIApp" target="SchemaRouter" parent="1">
+      <mxGeometry relative="1" as="geometry" />
+    </mxCell>
+
+    <!-- ChatRouter → DeepAgent (creates) -->
+    <mxCell id="e6" style="edgeStyle=orthogonalEdgeStyle;rounded=0;strokeColor=#64748b;fontSize=10;" edge="1" source="ChatRouter" target="DeepAgent" parent="1">
+      <mxGeometry relative="1" as="geometry" />
+    </mxCell>
+    <mxCell id="e6l" value="creates &amp; runs" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;fontSize=9;" vertex="1" connectable="0" parent="e6">
+      <mxGeometry relative="0.5" as="geometry" />
+    </mxCell>
+
+    <!-- DeepAgent → AgentEvent -->
+    <mxCell id="e7" style="edgeStyle=orthogonalEdgeStyle;rounded=0;strokeColor=#15803d;fontSize=10;" edge="1" source="DeepAgent" target="AgentEvent" parent="1">
+      <mxGeometry relative="1" as="geometry" />
+    </mxCell>
+    <mxCell id="e7l" value="yields" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;fontSize=9;" vertex="1" connectable="0" parent="e7">
+      <mxGeometry relative="0.5" as="geometry" />
+    </mxCell>
+
+    <!-- AgentEvent → EventType -->
+    <mxCell id="e8" style="edgeStyle=orthogonalEdgeStyle;rounded=0;strokeColor=#15803d;fontSize=10;endArrow=open;endFill=0;" edge="1" source="AgentEvent" target="EventType" parent="1">
+      <mxGeometry relative="1" as="geometry" />
+    </mxCell>
+    <mxCell id="e8l" value="type: EventType" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;fontSize=9;" vertex="1" connectable="0" parent="e8">
+      <mxGeometry relative="0.5" as="geometry" />
+    </mxCell>
+
+    <!-- DeepAgent → execute_sql -->
+    <mxCell id="e9" style="edgeStyle=orthogonalEdgeStyle;rounded=0;strokeColor=#15803d;dashed=1;fontSize=10;" edge="1" source="DeepAgent" target="execute_sql" parent="1">
+      <mxGeometry relative="1" as="geometry" />
+    </mxCell>
+    <mxCell id="e9l" value="registers tool" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;fontSize=9;" vertex="1" connectable="0" parent="e9">
+      <mxGeometry relative="0.5" as="geometry" />
+    </mxCell>
+
+    <!-- execute_sql → CodeActSQLTool -->
+    <mxCell id="e10" style="edgeStyle=orthogonalEdgeStyle;rounded=0;strokeColor=#15803d;fontSize=10;" edge="1" source="execute_sql" target="CodeActSQLTool" parent="1">
+      <mxGeometry relative="1" as="geometry" />
+    </mxCell>
+    <mxCell id="e10l" value="delegates to" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;fontSize=9;" vertex="1" connectable="0" parent="e10">
+      <mxGeometry relative="0.5" as="geometry" />
+    </mxCell>
+
+    <!-- CodeActSQLTool → DatabaseAdapter -->
+    <mxCell id="e11" style="edgeStyle=orthogonalEdgeStyle;rounded=0;strokeColor=#9d174d;fontSize=10;" edge="1" source="CodeActSQLTool" target="DatabaseAdapter" parent="1">
+      <mxGeometry relative="1" as="geometry" />
+    </mxCell>
+    <mxCell id="e11l" value="execute_query()" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;fontSize=9;" vertex="1" connectable="0" parent="e11">
+      <mxGeometry relative="0.5" as="geometry" />
+    </mxCell>
+
+    <!-- CodeActSQLTool → SemanticLayer -->
+    <mxCell id="e12" style="edgeStyle=orthogonalEdgeStyle;rounded=0;strokeColor=#a16207;fontSize=10;" edge="1" source="CodeActSQLTool" target="SemanticLayer" parent="1">
+      <mxGeometry relative="1" as="geometry" />
+    </mxCell>
+    <mxCell id="e12l" value="build_context()" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;fontSize=9;" vertex="1" connectable="0" parent="e12">
+      <mxGeometry relative="0.5" as="geometry" />
+    </mxCell>
+
+    <!-- DeepAgent → SemanticLayer -->
+    <mxCell id="e13" style="edgeStyle=orthogonalEdgeStyle;rounded=0;strokeColor=#a16207;dashed=1;fontSize=10;" edge="1" source="DeepAgent" target="SemanticLayer" parent="1">
+      <mxGeometry relative="1" as="geometry" />
+    </mxCell>
+    <mxCell id="e13l" value="schema context" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;fontSize=9;" vertex="1" connectable="0" parent="e13">
+      <mxGeometry relative="0.5" as="geometry" />
+    </mxCell>
+
+    <!-- DeepAgent → RedisClient (session history) -->
+    <mxCell id="e14" style="edgeStyle=orthogonalEdgeStyle;rounded=0;strokeColor=#6b21a8;fontSize=10;" edge="1" source="DeepAgent" target="RedisClient" parent="1">
+      <mxGeometry relative="1" as="geometry" />
+    </mxCell>
+    <mxCell id="e14l" value="get/set session history" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;fontSize=9;" vertex="1" connectable="0" parent="e14">
+      <mxGeometry relative="0.5" as="geometry" />
+    </mxCell>
+
+    <!-- CodeActSQLTool → RedisClient (result cache) -->
+    <mxCell id="e15" style="edgeStyle=orthogonalEdgeStyle;rounded=0;strokeColor=#6b21a8;fontSize=10;" edge="1" source="CodeActSQLTool" target="RedisClient" parent="1">
+      <mxGeometry relative="1" as="geometry" />
+    </mxCell>
+    <mxCell id="e15l" value="get/set cached result" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;fontSize=9;" vertex="1" connectable="0" parent="e15">
+      <mxGeometry relative="0.5" as="geometry" />
+    </mxCell>
+
+    <!-- SemanticLayer → SemanticRegistry -->
+    <mxCell id="e16" style="edgeStyle=orthogonalEdgeStyle;rounded=0;strokeColor=#a16207;endArrow=open;endFill=0;fontSize=10;" edge="1" source="SemanticLayer" target="SemanticRegistry" parent="1">
+      <mxGeometry relative="1" as="geometry" />
+    </mxCell>
+    <mxCell id="e16l" value="uses" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;fontSize=9;" vertex="1" connectable="0" parent="e16">
+      <mxGeometry relative="0.5" as="geometry" />
+    </mxCell>
+
+    <!-- SemanticRegistry → SemanticTable (1..*) -->
+    <mxCell id="e17" style="edgeStyle=orthogonalEdgeStyle;rounded=0;strokeColor=#a16207;endArrow=open;endFill=0;fontSize=10;" edge="1" source="SemanticRegistry" target="SemanticTable" parent="1">
+      <mxGeometry relative="1" as="geometry" />
+    </mxCell>
+    <mxCell id="e17l" value="1 .. *" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;fontSize=9;" vertex="1" connectable="0" parent="e17">
+      <mxGeometry relative="0.5" as="geometry" />
+    </mxCell>
+
+    <!-- SemanticTable → SemanticColumn (1..*) -->
+    <mxCell id="e18" style="edgeStyle=orthogonalEdgeStyle;rounded=0;strokeColor=#a16207;endArrow=ERmany;endFill=1;startArrow=ERone;startFill=0;fontSize=10;" edge="1" source="SemanticTable" target="SemanticColumn" parent="1">
+      <mxGeometry relative="1" as="geometry" />
+    </mxCell>
+    <mxCell id="e18l" value="columns  1..*" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;fontSize=9;" vertex="1" connectable="0" parent="e18">
+      <mxGeometry relative="0.5" as="geometry" />
+    </mxCell>
+
+    <!-- SemanticLayer → DatabaseAdapter -->
+    <mxCell id="e19" style="edgeStyle=orthogonalEdgeStyle;rounded=0;strokeColor=#9d174d;dashed=1;fontSize=10;" edge="1" source="SemanticLayer" target="DatabaseAdapter" parent="1">
+      <mxGeometry relative="1" as="geometry" />
+    </mxCell>
+    <mxCell id="e19l" value="get_tables / get_columns" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;fontSize=9;" vertex="1" connectable="0" parent="e19">
+      <mxGeometry relative="0.5" as="geometry" />
+    </mxCell>
+
+    <!-- DatabaseAdapter → PostgreSQLAdapter (inheritance) -->
+    <mxCell id="e20" style="edgeStyle=orthogonalEdgeStyle;rounded=0;strokeColor=#9d174d;endArrow=block;endFill=0;fontSize=10;" edge="1" source="PostgreSQLAdapter" target="DatabaseAdapter" parent="1">
+      <mxGeometry relative="1" as="geometry" />
+    </mxCell>
+
+    <!-- DatabaseAdapter → MySQLAdapter (inheritance) -->
+    <mxCell id="e21" style="edgeStyle=orthogonalEdgeStyle;rounded=0;strokeColor=#9d174d;endArrow=block;endFill=0;fontSize=10;" edge="1" source="MySQLAdapter" target="DatabaseAdapter" parent="1">
+      <mxGeometry relative="1" as="geometry" />
+    </mxCell>
+
+    <!-- DatabaseAdapter → SQLiteAdapter (inheritance) -->
+    <mxCell id="e22" style="edgeStyle=orthogonalEdgeStyle;rounded=0;strokeColor=#9d174d;endArrow=block;endFill=0;fontSize=10;" edge="1" source="SQLiteAdapter" target="DatabaseAdapter" parent="1">
+      <mxGeometry relative="1" as="geometry" />
+    </mxCell>
+
+    <!-- AdapterFactory → DatabaseAdapter -->
+    <mxCell id="e23" style="edgeStyle=orthogonalEdgeStyle;rounded=0;strokeColor=#9d174d;dashed=1;fontSize=10;" edge="1" source="AdapterFactory" target="DatabaseAdapter" parent="1">
+      <mxGeometry relative="1" as="geometry" />
+    </mxCell>
+    <mxCell id="e23l" value="returns" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;fontSize=9;" vertex="1" connectable="0" parent="e23">
+      <mxGeometry relative="0.5" as="geometry" />
+    </mxCell>
+
+    <!-- ChatRouter → AdapterFactory -->
+    <mxCell id="e24" style="edgeStyle=orthogonalEdgeStyle;rounded=0;strokeColor=#9d174d;dashed=1;fontSize=10;" edge="1" source="ChatRouter" target="AdapterFactory" parent="1">
+      <mxGeometry relative="1" as="geometry" />
+    </mxCell>
+    <mxCell id="e24l" value="get_adapter()" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;fontSize=9;" vertex="1" connectable="0" parent="e24">
+      <mxGeometry relative="0.5" as="geometry" />
+    </mxCell>
+
+    <!-- SchemaRouter → AdapterFactory -->
+    <mxCell id="e25" style="edgeStyle=orthogonalEdgeStyle;rounded=0;strokeColor=#9d174d;dashed=1;fontSize=10;" edge="1" source="SchemaRouter" target="AdapterFactory" parent="1">
+      <mxGeometry relative="1" as="geometry" />
+    </mxCell>
+
+    <!-- SchemaRouter → SemanticLayer -->
+    <mxCell id="e26" style="edgeStyle=orthogonalEdgeStyle;rounded=0;strokeColor=#a16207;dashed=1;fontSize=10;" edge="1" source="SchemaRouter" target="SemanticLayer" parent="1">
+      <mxGeometry relative="1" as="geometry" />
+    </mxCell>
+    <mxCell id="e26l" value="list_tables / enrich_table" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;fontSize=9;" vertex="1" connectable="0" parent="e26">
+      <mxGeometry relative="0.5" as="geometry" />
+    </mxCell>
+
+    <!-- Settings → (all components, dotted) -->
+    <mxCell id="e27" style="edgeStyle=orthogonalEdgeStyle;rounded=0;strokeColor=#6b21a8;dashed=1;fontSize=10;" edge="1" source="Settings" target="RedisClient" parent="1">
+      <mxGeometry relative="1" as="geometry" />
+    </mxCell>
+    <mxCell id="e27l" value="redis_url / ttl" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;fontSize=9;" vertex="1" connectable="0" parent="e27">
+      <mxGeometry relative="0.5" as="geometry" />
+    </mxCell>
+
+    <!-- ===== LEGEND ===== -->
+    <mxCell id="legend-title" value="Legend" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;fontSize=11;fontStyle=1;" vertex="1" parent="1">
+      <mxGeometry x="40" y="870" width="80" height="20" as="geometry" />
+    </mxCell>
+    <mxCell id="leg1" value="Inheritance / implements" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;fontSize=10;" vertex="1" parent="1">
+      <mxGeometry x="160" y="870" width="180" height="20" as="geometry" />
+    </mxCell>
+    <mxCell id="leg1e" style="edgeStyle=orthogonalEdgeStyle;strokeColor=#9d174d;endArrow=block;endFill=0;" edge="1" parent="1">
+      <mxGeometry relative="1" as="geometry"><Array as="points"><mxPoint x="100" y="880"/><mxPoint x="155" y="880"/></Array></mxGeometry>
+    </mxCell>
+    <mxCell id="leg2" value="Dependency / uses" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;fontSize=10;" vertex="1" parent="1">
+      <mxGeometry x="160" y="900" width="180" height="20" as="geometry" />
+    </mxCell>
+    <mxCell id="leg2e" style="edgeStyle=orthogonalEdgeStyle;strokeColor=#64748b;dashed=1;" edge="1" parent="1">
+      <mxGeometry relative="1" as="geometry"><Array as="points"><mxPoint x="100" y="910"/><mxPoint x="155" y="910"/></Array></mxGeometry>
+    </mxCell>
+    <mxCell id="leg3" value="Data flow / calls" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;fontSize=10;" vertex="1" parent="1">
+      <mxGeometry x="160" y="930" width="180" height="20" as="geometry" />
+    </mxCell>
+    <mxCell id="leg3e" style="edgeStyle=orthogonalEdgeStyle;strokeColor=#64748b;" edge="1" parent="1">
+      <mxGeometry relative="1" as="geometry"><Array as="points"><mxPoint x="100" y="940"/><mxPoint x="155" y="940"/></Array></mxGeometry>
+    </mxCell>
+    <mxCell id="leg4" value="Composition  1..*" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;fontSize=10;" vertex="1" parent="1">
+      <mxGeometry x="160" y="960" width="180" height="20" as="geometry" />
+    </mxCell>
+    <mxCell id="leg4e" style="edgeStyle=orthogonalEdgeStyle;strokeColor=#a16207;endArrow=ERmany;endFill=1;startArrow=ERone;startFill=0;" edge="1" parent="1">
+      <mxGeometry relative="1" as="geometry"><Array as="points"><mxPoint x="100" y="970"/><mxPoint x="155" y="970"/></Array></mxGeometry>
+    </mxCell>
+
+  </root>
+</mxGraphModel>
