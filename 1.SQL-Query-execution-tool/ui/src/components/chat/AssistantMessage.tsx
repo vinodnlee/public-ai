@@ -7,6 +7,7 @@ import type { ChatMessage } from '../../hooks/useChat'
 import { ThinkingIndicator } from './ThinkingIndicator'
 import { SqlBlock } from './SqlBlock'
 import { ResultTable } from './ResultTable'
+import { ResultChart } from './ResultChart'
 
 interface AssistantMessageProps {
   message: ChatMessage
@@ -57,11 +58,14 @@ function EventBlock({ event }: { event: AgentEvent }) {
       )
     case 'result':
       return event.columns && event.rows ? (
-        <ResultTable
-          columns={event.columns}
-          rows={event.rows}
-          rowCount={event.row_count ?? event.rows.length}
-        />
+        <div className="space-y-2">
+          <ResultChart columns={event.columns} rows={event.rows} />
+          <ResultTable
+            columns={event.columns}
+            rows={event.rows}
+            rowCount={event.row_count ?? event.rows.length}
+          />
+        </div>
       ) : null
     case 'error':
       return (
