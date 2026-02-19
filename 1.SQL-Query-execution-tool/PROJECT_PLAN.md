@@ -279,4 +279,8 @@ docker compose up --build
 
 | Date | Task | Commit |
 |------|------|--------|
-| 2025-02-19 | 1.1 + 1.2: Scaffold Vite+React+TS, Tailwind, Vite proxy | — |
+| 2025-02-19 | 1.1 + 1.2: Scaffold Vite+React+TS, Tailwind, Vite proxy | d5e5819 |
+| 2025-02-19 | 1.3: AgentEvent types | 93364af |
+| 2025-02-19 | 1.4: Chat API client | ef8ee54 |
+| 2025-02-19 | 1.5: useChat hook | 7e1c0c8 |
+| 2025-02-19 | 1.6–1.12: Chat components + App layout | — |

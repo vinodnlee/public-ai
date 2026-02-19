@@ -46,7 +46,6 @@ export function useChat(): UseChatReturn {
     setMessages((prev) => [...prev, userMsg])
 
     // Placeholder for assistant — we'll stream into it
-    const assistantIdx = messages.length + 1
     setMessages((prev) => [
       ...prev,
       {
