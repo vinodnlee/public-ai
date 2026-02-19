@@ -2,28 +2,62 @@ import { useState } from 'react'
 import { ChatWindow } from './components/chat/ChatWindow'
 import { ChatInput } from './components/chat/ChatInput'
 import { SchemaSidebar } from './components/chat/SchemaSidebar'
+import { LoginForm } from './components/chat/LoginForm'
 import { useChat } from './hooks/useChat'
+import { getToken, clearToken } from './api/authApi'
 
 function App() {
-  const { messages, isLoading, error, sendMessage, clearError } = useChat()
+  const { messages, isLoading, error, sendMessage, clearError, authRequired } = useChat()
   const [schemaOpen, setSchemaOpen] = useState(false)
+  const [showLogin, setShowLogin] = useState(false)
+  const token = getToken()
+  const displayLogin = showLogin || (authRequired && !token)
 
   return (
     <div className="flex flex-col h-screen bg-slate-100">
-      <header className="shrink-0 px-4 py-3 bg-white border-b border-slate-200 shadow-sm flex items-center justify-between">
+      <header className="shrink-0 px-4 py-3 bg-white border-b border-slate-200 shadow-sm flex items-center justify-between flex-wrap gap-2">
         <div>
           <h1 className="text-xl font-semibold text-slate-800">DeepAgent SQL Chat</h1>
           <p className="text-sm text-slate-500 mt-0.5">
             Ask natural language questions — get SQL results
           </p>
         </div>
-        <button
-          type="button"
-          onClick={() => setSchemaOpen((o) => !o)}
-          className="shrink-0 px-3 py-1.5 rounded-md text-sm font-medium text-slate-600 bg-slate-100 hover:bg-slate-200"
-        >
-          {schemaOpen ? 'Hide' : 'Show'} schema
-        </button>
+        <div className="flex items-center gap-2">
+          {displayLogin ? (
+            <LoginForm
+              onSuccess={() => { setShowLogin(false); clearError() }}
+              onCancel={() => { setShowLogin(false); clearToken() }}
+              errorMessage={authRequired ? 'Please log in.' : undefined}
+            />
+          ) : (
+            <>
+              {token && token !== 'disabled' ? (
+                <button
+                  type="button"
+                  onClick={() => { clearToken(); setShowLogin(false) }}
+                  className="px-2 py-1 rounded text-slate-500 hover:bg-slate-100 text-sm"
+                >
+                  Log out
+                </button>
+              ) : (
+                <button
+                  type="button"
+                  onClick={() => setShowLogin(true)}
+                  className="px-2 py-1 rounded text-slate-600 hover:bg-slate-100 text-sm"
+                >
+                  Log in
+                </button>
+              )}
+              <button
+                type="button"
+                onClick={() => setSchemaOpen((o) => !o)}
+                className="shrink-0 px-3 py-1.5 rounded-md text-sm font-medium text-slate-600 bg-slate-100 hover:bg-slate-200"
+              >
+                {schemaOpen ? 'Hide' : 'Show'} schema
+              </button>
+            </>
+          )}
+        </div>
       </header>
 
       <div className="flex-1 flex min-h-0">

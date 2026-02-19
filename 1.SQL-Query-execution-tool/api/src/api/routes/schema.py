@@ -7,7 +7,8 @@ physical schema (from the database adapter) with business descriptions
 sidebar or column picker.
 """
 
-from fastapi import APIRouter
+from fastapi import APIRouter, Depends
+from src.auth.jwt import get_current_user
 from src.db.adapters.factory import get_adapter
 from src.semantic.layer import SemanticLayer
 
@@ -15,7 +16,7 @@ router = APIRouter(prefix="/schema", tags=["schema"])
 
 
 @router.get("")
-async def list_tables() -> list[dict]:
+async def list_tables(_user: dict = Depends(get_current_user)) -> list[dict]:
     """
     List all tables with their semantic display names and descriptions.
     """
@@ -25,7 +26,10 @@ async def list_tables() -> list[dict]:
 
 
 @router.get("/{table_name}")
-async def get_table(table_name: str) -> dict:
+async def get_table(
+    table_name: str,
+    _user: dict = Depends(get_current_user),
+) -> dict:
     """
     Return enriched column metadata + semantic definitions for a single table.
     """
@@ -35,7 +39,7 @@ async def get_table(table_name: str) -> dict:
 
 
 @router.get("/context/prompt")
-async def get_prompt_context() -> dict:
+async def get_prompt_context(_user: dict = Depends(get_current_user)) -> dict:
     """
     Return the full schema context string used by DeepAgent in its system prompt.
     Useful for debugging what context the LLM sees.

@@ -71,6 +71,14 @@ class Settings(BaseSettings):
     deepagent_max_iterations: int = 10
     deepagent_timeout_seconds: int = 120
 
+    # JWT Auth
+    auth_enabled: bool = False
+    jwt_secret: str = "change-me-in-production"
+    jwt_algorithm: str = "HS256"
+    jwt_expire_minutes: int = 60
+    admin_username: str = "admin"
+    admin_password: str = "admin"
+
     # ------------------------------------------------------------------
     # Computed DSNs
     # ------------------------------------------------------------------

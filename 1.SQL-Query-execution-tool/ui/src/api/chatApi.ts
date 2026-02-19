@@ -1,9 +1,11 @@
 /**
  * Chat API client — initiates chat and opens SSE stream.
  * Uses relative /api paths (Vite proxy forwards to backend).
+ * Sends JWT when present (auth).
  */
 
 import type { AgentEvent } from '../types/agent'
+import { getAuthHeaders, withTokenInUrl } from './authApi'
 
 const API_BASE = import.meta.env.VITE_API_BASE_URL ?? ''
 
@@ -24,9 +26,13 @@ export async function initiateChat(
   query: string,
   sessionId: string
 ): Promise<InitiateChatResponse> {
+  const headers: Record<string, string> = {
+    'Content-Type': 'application/json',
+    ...getAuthHeaders(),
+  }
   const res = await fetch(`${API_BASE}/api/chat`, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers,
     body: JSON.stringify({ query, session_id: sessionId } satisfies InitiateChatRequest),
   })
   if (!res.ok) {
@@ -45,7 +51,8 @@ export function openEventStream(
   onEvent: (event: AgentEvent, closeStream: () => void) => void,
   onError?: (err: Event) => void
 ): EventSource {
-  const url = streamUrl.startsWith('http') ? streamUrl : `${API_BASE}${streamUrl}`
+  let url = streamUrl.startsWith('http') ? streamUrl : `${API_BASE}${streamUrl}`
+  url = withTokenInUrl(url)
   const es = new EventSource(url)
   const closeStream = () => es.close()
 

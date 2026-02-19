@@ -11,6 +11,7 @@ from unittest.mock import AsyncMock, patch
 
 # Ensure CORS_origins parses in tests (pydantic-settings expects JSON list from env)
 os.environ["CORS_ORIGINS"] = '["http://localhost:3000"]'
+os.environ["AUTH_ENABLED"] = "false"
 
 import pytest
 from src.db.adapters.sqlite import SQLiteAdapter

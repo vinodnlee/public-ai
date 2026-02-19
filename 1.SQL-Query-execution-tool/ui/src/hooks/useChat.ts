@@ -4,6 +4,7 @@
 
 import { useCallback, useRef, useState } from 'react'
 import { initiateChat, openEventStream } from '../api/chatApi'
+import { clearToken } from '../api/authApi'
 import type { AgentEvent } from '../types/agent'
 
 export interface ChatMessage {
@@ -17,6 +18,7 @@ export interface UseChatReturn {
   messages: ChatMessage[]
   isLoading: boolean
   error: string | null
+  authRequired: boolean
   sendMessage: (query: string) => Promise<void>
   clearError: () => void
 }
@@ -29,10 +31,14 @@ export function useChat(): UseChatReturn {
   const [messages, setMessages] = useState<ChatMessage[]>([])
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [authRequired, setAuthRequired] = useState(false)
   const sessionIdRef = useRef<string>(generateSessionId())
   const eventSourceRef = useRef<EventSource | null>(null)
 
-  const clearError = useCallback(() => setError(null), [])
+  const clearError = useCallback(() => {
+    setError(null)
+    setAuthRequired(false)
+  }, [])
 
   const sendMessage = useCallback(async (query: string) => {
     const trimmed = query.trim()
@@ -94,11 +100,16 @@ export function useChat(): UseChatReturn {
       )
       eventSourceRef.current = es
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to send message')
+      const msg = err instanceof Error ? err.message : 'Failed to send message'
+      if (msg.includes('401') || msg.includes('Unauthorized')) {
+        clearToken()
+        setAuthRequired(true)
+      }
+      setError(msg)
       setIsLoading(false)
       setMessages((prev) => prev.slice(0, -1))
     }
   }, [isLoading, messages.length])
 
-  return { messages, isLoading, error, sendMessage, clearError }
+  return { messages, isLoading, error, authRequired, sendMessage, clearError }
 }

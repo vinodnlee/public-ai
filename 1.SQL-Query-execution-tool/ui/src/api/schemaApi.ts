@@ -1,6 +1,9 @@
 /**
  * Schema browser API — list tables and get table details.
+ * Sends JWT when present (auth).
  */
+
+import { getAuthHeaders } from './authApi'
 
 const API_BASE = import.meta.env.VITE_API_BASE_URL ?? ''
 
@@ -33,14 +36,15 @@ export interface TableDetail {
 }
 
 export async function fetchTableList(): Promise<TableSummary[]> {
-  const res = await fetch(`${API_BASE}/api/schema`)
+  const res = await fetch(`${API_BASE}/api/schema`, { headers: getAuthHeaders() })
   if (!res.ok) throw new Error(`Schema list failed: ${res.status}`)
   return res.json()
 }
 
 export async function fetchTableDetail(tableName: string): Promise<TableDetail> {
   const res = await fetch(
-    `${API_BASE}/api/schema/${encodeURIComponent(tableName)}`
+    `${API_BASE}/api/schema/${encodeURIComponent(tableName)}`,
+    { headers: getAuthHeaders() }
   )
   if (!res.ok) throw new Error(`Schema table failed: ${res.status}`)
   return res.json()

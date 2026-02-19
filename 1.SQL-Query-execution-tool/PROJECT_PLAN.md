@@ -289,4 +289,5 @@ docker compose up --build
 | 2025-02-19 | 3.1–3.5: Pytest setup + tests (CodeAct, DB adapter, SemanticLayer, routes) | 7801a86 |
 | 2025-02-19 | 4.2: CSV export on ResultTable | b8f5aba |
 | 2025-02-19 | 4.3: Schema browser sidebar | 516e2bb |
-| 2025-02-19 | 4.4: Chart UI (bar/line for numeric columns) | — |
+| 2025-02-19 | 4.4: Chart UI (bar/line for numeric columns) | 43b368c |
+| 2025-02-19 | 4.1: JWT authentication (API + UI login) | — |
