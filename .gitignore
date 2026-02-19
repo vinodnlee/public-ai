@@ -1,0 +1,58 @@
+# ──────────────────────────────────────────────
+# Python
+# ──────────────────────────────────────────────
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.so
+*.egg
+*.egg-info/
+dist/
+build/
+.eggs/
+.tox/
+.mypy_cache/
+.ruff_cache/
+.pytest_cache/
+.coverage
+htmlcov/
+*.log
+
+# Virtual environments
+.venv/
+venv/
+env/
+ENV/
+
+# ──────────────────────────────────────────────
+# Node / UI
+# ──────────────────────────────────────────────
+**/node_modules/
+**/dist/
+**/.vite/
+*.local
+
+# ──────────────────────────────────────────────
+# Environment / secrets  ← NEVER commit these
+# ──────────────────────────────────────────────
+.env
+**/.env
+!**/.env.example
+!**/.env.docker
+
+# ──────────────────────────────────────────────
+# IDEs & editors
+# ──────────────────────────────────────────────
+.vscode/
+.idea/
+*.swp
+*.swo
+.DS_Store
+Thumbs.db
+
+# ──────────────────────────────────────────────
+# SQLite (local dev database)
+# ──────────────────────────────────────────────
+*.db
+*.sqlite3
