@@ -290,4 +290,4 @@ docker compose up --build
 | 2025-02-19 | 4.2: CSV export on ResultTable | b8f5aba |
 | 2025-02-19 | 4.3: Schema browser sidebar | 516e2bb |
 | 2025-02-19 | 4.4: Chart UI (bar/line for numeric columns) | 43b368c |
-| 2025-02-19 | 4.1: JWT authentication (API + UI login) | — |
+| 2025-02-19 | 4.1: JWT authentication (API + UI login) | 5e3a770 |
