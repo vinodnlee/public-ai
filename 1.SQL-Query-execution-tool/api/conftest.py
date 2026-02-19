@@ -4,9 +4,13 @@ Pytest fixtures for API tests.
 Provides in-memory SQLite adapter and Redis mocking for isolated tests.
 """
 
+import os
 import asyncio
 from collections.abc import AsyncGenerator, Generator
 from unittest.mock import AsyncMock, patch
+
+# Ensure CORS_origins parses in tests (pydantic-settings expects JSON list from env)
+os.environ["CORS_ORIGINS"] = '["http://localhost:3000"]'
 
 import pytest
 from src.db.adapters.sqlite import SQLiteAdapter

@@ -1,10 +1,16 @@
 """
 Tests for API routes: health check and chat init.
+
+Requires full API dependencies (deepagents, langchain, etc.) to import main.
+Skip this module if not installed: pytest -k "not test_routes" or install requirements.txt.
 """
+
+import pytest
+
+pytest.importorskip("deepagents", reason="deepagents not installed; skip route tests")
 
 from unittest.mock import AsyncMock, patch
 
-import pytest
 from fastapi.testclient import TestClient
 
 from main import create_app
