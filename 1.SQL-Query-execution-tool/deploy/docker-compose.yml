@@ -1,0 +1,136 @@
+# ─────────────────────────────────────────────────────────────────────────────
+# DeepAgent SQL Chat App — Docker Compose
+#
+# Services:
+#   db    — PostgreSQL 15 (pre-seeded company schema + data)
+#   redis — Redis 7 (session history + query result cache)
+#   api   — FastAPI + deepagents (Python 3.12)
+#   ui    — React + Vite + Tailwind served by Nginx
+#
+# All builds use context: .. (project root) so Dockerfiles reference
+# source paths as  api/..., ui/..., db/...
+#
+# Usage (from this deploy/ directory):
+#   cp .env.docker .env          # fill in LLM_API_KEY
+#   docker compose up --build
+#   docker compose up --build api   # rebuild only the API
+# ─────────────────────────────────────────────────────────────────────────────
+
+services:
+
+  # ── PostgreSQL ─────────────────────────────────────────────────────────────
+  db:
+    build:
+      context: ..
+      dockerfile: deploy/db/Dockerfile
+    container_name: sqlchat_db
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-chatdb}
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
+    ports:
+      - "${POSTGRES_PORT:-5432}:5432"
+    volumes:
+      - pg_data:/var/lib/postgresql/data
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-postgres} -d ${POSTGRES_DB:-chatdb}" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+    networks:
+      - sqlchat
+
+  # ── Redis ──────────────────────────────────────────────────────────────────
+  redis:
+    image: redis:7-alpine
+    container_name: sqlchat_redis
+    restart: unless-stopped
+    command: >
+      redis-server
+        --maxmemory 256mb
+        --maxmemory-policy allkeys-lru
+        --save ""
+    ports:
+      - "${REDIS_PORT:-6379}:6379"
+    healthcheck:
+      test: [ "CMD", "redis-cli", "ping" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - sqlchat
+
+  # ── FastAPI API ────────────────────────────────────────────────────────────
+  api:
+    build:
+      context: ..
+      dockerfile: deploy/api/Dockerfile
+    container_name: sqlchat_api
+    restart: unless-stopped
+    env_file: .env
+    environment:
+      # Service-name overrides (env_file sets the rest)
+      POSTGRES_HOST: db
+      REDIS_HOST: redis
+      APP_HOST: 0.0.0.0
+      APP_PORT: "8000"
+      CORS_ORIGINS: "http://localhost:3000,http://ui:3000"
+    ports:
+      - "${APP_PORT:-8000}:8000"
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    # Development hot-reload override:
+    # command: ["python", "-m", "uvicorn", "src.main:app",
+    #           "--host", "0.0.0.0", "--port", "8000", "--reload"]
+    volumes:
+      # Uncomment for live-reload in dev (mount source into container):
+      # - ../api/src:/app/src:ro
+      # - ../api/main.py:/app/main.py:ro
+      - api_logs:/app/logs
+    healthcheck:
+      test: [ "CMD", "curl", "-f", "http://localhost:8000/health" ]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+    networks:
+      - sqlchat
+
+  # ── React UI ───────────────────────────────────────────────────────────────
+  ui:
+    build:
+      context: ..
+      dockerfile: deploy/ui/Dockerfile
+      args:
+        VITE_API_BASE_URL: "http://localhost:${APP_PORT:-8000}"
+    container_name: sqlchat_ui
+    restart: unless-stopped
+    ports:
+      - "${UI_PORT:-3000}:3000"
+    depends_on:
+      api:
+        condition: service_healthy
+    healthcheck:
+      test: [ "CMD", "wget", "-q", "-O", "/dev/null", "http://localhost:3000/" ]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+    networks:
+      - sqlchat
+
+# ─────────────────────────────────────────────────────────────────────────────
+volumes:
+  pg_data:
+    driver: local
+  api_logs:
+    driver: local
+
+networks:
+  sqlchat:
+    driver: bridge

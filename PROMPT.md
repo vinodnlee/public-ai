@@ -185,6 +185,7 @@ psql -U postgres -d chatdb -f db/postgress/00_run_all.sql
 | ORM / DB Driver  | SQLAlchemy (asyncio), asyncpg / aiomysql / aiosqlite           |
 | Database         | PostgreSQL 15 (Primary + Read Replica)                         |
 | Result Cache     | Redis                                                          |
+| Containerization | Docker, Docker Compose, Nginx 1.27-alpine                      |
 
 ---
 
@@ -195,6 +196,19 @@ psql -U postgres -d chatdb -f db/postgress/00_run_all.sql
 ├── README.md
 ├── PROMPT.md
 ├── DeepAgent-SQL-Chat-Architecture.drawio
+│
+├── deploy/                              ← all Docker / container files
+│   ├── docker-compose.yml               ← run `docker compose up --build` from here
+│   ├── .env.docker                      ← env template for Docker (copy to .env)
+│   ├── api/
+│   │   ├── Dockerfile                   ← 2-stage Python 3.12-slim build
+│   │   └── Dockerfile.dockerignore      ← per-service build context filter
+│   ├── ui/
+│   │   ├── Dockerfile                   ← 2-stage Node 20 → Nginx 1.27-alpine
+│   │   ├── nginx.conf                   ← SPA routing + SSE proxy + asset caching
+│   │   └── Dockerfile.dockerignore
+│   └── db/
+│       └── Dockerfile                   ← postgres:15-alpine + seed scripts
 │
 ├── db/
 │   └── postgress/
@@ -320,6 +334,23 @@ DEEPAGENT_TIMEOUT_SECONDS=120
 
 ## 🚀 Run Instructions
 
+### Option A — Docker (recommended)
+
+```bash
+cd deploy
+cp .env.docker .env          # then set LLM_API_KEY=sk-...
+docker compose up --build    # builds all 4 services
+
+# Access:
+#   UI  → http://localhost:3000
+#   API → http://localhost:8000/docs  (Swagger)
+
+# Rebuild a single service after code change:
+docker compose up --build api
+```
+
+### Option B — Local (manual)
+
 ```bash
 # API
 cd api
@@ -349,7 +380,7 @@ Use these follow-up prompts to extend the project:
 
 | Goal | Prompt to use |
 |---|---|
-| Add Docker support | "Based on this PROMPT.md, create a `docker-compose.yml` for the full stack" |
+| Add Docker support | ✅ Done — see `deploy/` folder. Run: `cd deploy && cp .env.docker .env && docker compose up --build` |
 | Add authentication | "Based on this PROMPT.md, add JWT authentication to the FastAPI API" |
 | Add CSV export | "Based on this PROMPT.md, add a Download CSV button to ResultTable" |
 | Add tests | "Based on this PROMPT.md, create pytest tests for the CodeAct tool and query executor" |

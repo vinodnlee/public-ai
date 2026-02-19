@@ -1,0 +1,36 @@
+# Paths are relative to the build context (project root)
+
+# Python cache
+api/__pycache__/
+api/**/*.py[cod]
+api/**/*.pyo
+api/**/*.pyd
+
+# Virtual environments
+api/.venv/
+api/venv/
+api/env/
+
+# Dev / test artefacts
+api/.pytest_cache/
+api/.mypy_cache/
+api/.ruff_cache/
+api/htmlcov/
+api/.coverage
+api/coverage.xml
+api/**/*.log
+
+# Secrets — never bake into image
+api/.env
+api/.env.*
+!api/.env.example
+
+# Editor / OS
+**/.DS_Store
+**/.idea/
+**/.vscode/
+
+# Other services — exclude from API build context
+ui/
+db/
+deploy/

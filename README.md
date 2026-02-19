@@ -36,21 +36,31 @@ A real-time chat application that lets users ask **natural language questions** 
 | SSE Client | Native `EventSource` API |
 | API Gateway | FastAPI, `sse-starlette` |
 | Session Store | Redis |
-| Agent Framework | DeepAgent |
-| LLM Backend | OpenAI GPT-4o / Claude |
-| Agent Tool | CodeAct Agent Tool |
-| ORM / DB Driver | SQLAlchemy (async), asyncpg |
-| Database | PostgreSQL (Primary + Read Replica) |
+| Agent Framework | `deepagents` — `create_deep_agent` (supervisor + subagent graph) |
+| LLM Backend | OpenAI GPT-4o via `init_chat_model` |
+| Agent Tool | CodeAct SQL Tool (LangChain `@tool`) |
+| ORM / DB Driver | SQLAlchemy (async), asyncpg / aiomysql / aiosqlite |
+| Database | PostgreSQL 15 (Primary + Read Replica) |
 | Result Cache | Redis |
+| Containerization | Docker, Docker Compose, Nginx |
 
 #### Quick Start
 
+**Docker (recommended)**
+```bash
+cd 1.SQL-Query-execution-tool/deploy
+cp .env.docker .env          # set LLM_API_KEY
+docker compose up --build    # UI → :3000  |  API → :8000
+```
+
+**Local**
 ```bash
 # API
 cd 1.SQL-Query-execution-tool/api
-poetry install
+python -m venv .venv && .venv\Scripts\activate
+pip install -r requirements.txt
 cp .env.example .env   # fill in your values
-poetry run python main.py  # http://localhost:8000
+python main.py         # http://localhost:8000
 
 # UI
 cd 1.SQL-Query-execution-tool/ui

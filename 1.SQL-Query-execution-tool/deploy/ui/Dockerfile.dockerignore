@@ -1,0 +1,20 @@
+# Paths are relative to the build context (project root)
+
+ui/node_modules/
+ui/dist/
+ui/.vite/
+ui/.cache/
+
+# Secrets
+ui/.env
+ui/.env.*
+!ui/.env.example
+
+# Editor / OS
+**/.DS_Store
+**/.idea/
+**/.vscode/
+
+# Other services — exclude from UI build context
+api/
+db/
