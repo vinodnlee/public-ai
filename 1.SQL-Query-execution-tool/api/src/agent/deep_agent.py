@@ -235,8 +235,17 @@ class DeepAgent:
 
         yield AgentEvent(type=EventType.THINKING, content="Generating SQL query...")
 
+        # Load conversation history from Redis so the model has context across turns
+        history = await get_session_history(session_id) or []
+        messages = [
+            {"role": m["role"], "content": m["content"]}
+            for m in history
+            if isinstance(m.get("role"), str) and isinstance(m.get("content"), str)
+        ]
+        messages.append({"role": "user", "content": query})
+
         config = {"configurable": {"thread_id": thread_id}}
-        input_payload = {"messages": [{"role": "user", "content": query}]}
+        input_payload = {"messages": messages}
 
         full_response_parts: list[str] = []
 
@@ -273,12 +282,10 @@ class DeepAgent:
                     yield captured
 
         # ── Persist conversation turn to Redis ───────────────────────────
-        history = await get_session_history(session_id) or []
         full_response = "".join(full_response_parts)
-        history.append({"role": "user", "content": query})
-        history.append({"role": "assistant", "content": full_response})
-        # keep last 10 turns
-        await set_session_history(session_id, history[-20:])
+        new_history = messages + [{"role": "assistant", "content": full_response}]
+        # keep last 10 turns (20 messages)
+        await set_session_history(session_id, new_history[-20:])
 
         yield AgentEvent(type=EventType.DONE)
 

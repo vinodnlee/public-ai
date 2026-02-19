@@ -2,12 +2,25 @@ import { useState } from 'react'
 import { ChatWindow } from './components/chat/ChatWindow'
 import { ChatInput } from './components/chat/ChatInput'
 import { SchemaSidebar } from './components/chat/SchemaSidebar'
+import { SessionSidebar } from './components/chat/SessionSidebar'
 import { LoginForm } from './components/chat/LoginForm'
 import { useChat } from './hooks/useChat'
 import { getToken, clearToken } from './api/authApi'
 
 function App() {
-  const { messages, isLoading, error, sendMessage, clearError, authRequired } = useChat()
+  const {
+    sessions,
+    currentSessionId,
+    messages,
+    isLoading,
+    error,
+    sendMessage,
+    startNewSession,
+    switchToSession,
+    clearError,
+    authRequired,
+  } = useChat()
+  const [sessionListOpen, setSessionListOpen] = useState(false)
   const [schemaOpen, setSchemaOpen] = useState(false)
   const [showLogin, setShowLogin] = useState(false)
   const token = getToken()
@@ -50,6 +63,20 @@ function App() {
               )}
               <button
                 type="button"
+                onClick={() => setSessionListOpen((o) => !o)}
+                className="shrink-0 px-3 py-1.5 rounded-md text-sm font-medium text-slate-600 bg-slate-100 hover:bg-slate-200"
+              >
+                Chats
+              </button>
+              <button
+                type="button"
+                onClick={startNewSession}
+                className="shrink-0 px-3 py-1.5 rounded-md text-sm font-medium text-slate-600 bg-slate-100 hover:bg-slate-200"
+              >
+                New chat
+              </button>
+              <button
+                type="button"
                 onClick={() => setSchemaOpen((o) => !o)}
                 className="shrink-0 px-3 py-1.5 rounded-md text-sm font-medium text-slate-600 bg-slate-100 hover:bg-slate-200"
               >
@@ -61,6 +88,14 @@ function App() {
       </header>
 
       <div className="flex-1 flex min-h-0">
+        <SessionSidebar
+          isOpen={sessionListOpen}
+          onClose={() => setSessionListOpen(false)}
+          sessions={sessions}
+          currentSessionId={currentSessionId}
+          onNewChat={startNewSession}
+          onSelectSession={switchToSession}
+        />
         <SchemaSidebar isOpen={schemaOpen} onClose={() => setSchemaOpen(false)} />
         <main className="flex-1 flex flex-col min-h-0 min-w-0">
           <ChatWindow messages={messages} />
