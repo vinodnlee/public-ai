@@ -224,11 +224,10 @@ psql -U postgres -d chatdb -f db/postgress/00_run_all.sql
 │       └── 09_insert_order_items.sql
 │
 ├── api/
-│   ├── main.py                          ← uvicorn entry point
+│   ├── main.py                          ← FastAPI app factory + CORS + uvicorn entry point
 │   ├── requirements.txt                 ← pip dependencies
 │   ├── .env.example                     ← environment variable template
 │   └── src/
-│       ├── main.py                      ← FastAPI app factory + CORS
 │       ├── config/
 │       │   └── settings.py              ← Pydantic BaseSettings
 │       ├── db/
