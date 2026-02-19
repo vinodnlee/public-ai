@@ -50,7 +50,7 @@ Build a **Chat Application** using **DeepAgent** that allows users to ask natura
 
 | Component | Path | Priority |
 |-----------|------|----------|
-| **React UI** | `ui/` | **P0** — In progress (scaffold + Tailwind done) |
+| **React UI** | `ui/` | **P0** — Done (Phase 1 complete) |
 | `.env.example` | `api/.env.example` | P1 |
 | `README.md` | `1.SQL-Query-execution-tool/README.md` | P1 |
 | Unit tests | `api/tests/` | P2 |
@@ -283,4 +283,6 @@ docker compose up --build
 | 2025-02-19 | 1.3: AgentEvent types | 93364af |
 | 2025-02-19 | 1.4: Chat API client | ef8ee54 |
 | 2025-02-19 | 1.5: useChat hook | 7e1c0c8 |
-| 2025-02-19 | 1.6–1.12: Chat components + App layout | — |
+| 2025-02-19 | 1.6–1.12: Chat components + App layout | 3474cc7 |
+| 2025-02-19 | 2.1: .env.example | 8980755 |
+| 2025-02-19 | 2.2: README.md | 799352e |
