@@ -38,9 +38,9 @@ ui/.vite/
 # ──────────────────────────────────────────────
 .env
 deploy/.env
+deploy/.env.docker
 api/.env
 !api/.env.example
-!deploy/.env.docker
 
 # ──────────────────────────────────────────────
 # Docker

@@ -38,8 +38,8 @@ ENV/
 # ──────────────────────────────────────────────
 .env
 **/.env
+**/.env.docker
 !**/.env.example
-!**/.env.docker
 
 # ──────────────────────────────────────────────
 # IDEs & editors
@@ -56,3 +56,4 @@ Thumbs.db
 # ──────────────────────────────────────────────
 *.db
 *.sqlite3
+1.SQL-Query-execution-tool/deploy/.env.docker
