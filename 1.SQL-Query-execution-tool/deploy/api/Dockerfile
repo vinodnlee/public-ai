@@ -50,11 +50,11 @@ EXPOSE 8000
 HEALTHCHECK --interval=30s --timeout=10s --start-period=20s --retries=3 \
     CMD curl -f http://localhost:8000/health || exit 1
 
-# Production server: uvicorn with multiple workers
-# (override CMD via docker-compose for local dev with --reload)
+# Single worker — pending stream IDs are stored in Redis so multi-worker
+# is safe, but 1 worker keeps SSE connections stable in Docker.
 CMD ["python", "-m", "uvicorn", "main:app", \
     "--host", "0.0.0.0", \
     "--port", "8000", \
-    "--workers", "2", \
+    "--workers", "1", \
     "--loop", "uvloop", \
     "--http", "httptools"]

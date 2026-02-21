@@ -1,4 +1,22 @@
 import { useState } from 'react'
+import {
+  Box,
+  AppBar,
+  Toolbar,
+  Typography,
+  IconButton,
+  Tooltip,
+  Snackbar,
+  Alert,
+  useMediaQuery,
+  useTheme,
+} from '@mui/material'
+import MenuIcon from '@mui/icons-material/Menu'
+import AddCommentOutlinedIcon from '@mui/icons-material/AddCommentOutlined'
+import AccountTreeOutlinedIcon from '@mui/icons-material/AccountTreeOutlined'
+import LogoutIcon from '@mui/icons-material/Logout'
+import LoginIcon from '@mui/icons-material/Login'
+import StorageRoundedIcon from '@mui/icons-material/StorageRounded'
 import { ChatWindow } from './components/chat/ChatWindow'
 import { ChatInput } from './components/chat/ChatInput'
 import { SchemaSidebar } from './components/chat/SchemaSidebar'
@@ -7,7 +25,11 @@ import { LoginForm } from './components/chat/LoginForm'
 import { useChat } from './hooks/useChat'
 import { getToken, clearToken } from './api/authApi'
 
+const APPBAR_H = 64
+
 function App() {
+  const muiTheme = useTheme()
+  const isDesktop = useMediaQuery(muiTheme.breakpoints.up('md'))
   const {
     sessions,
     currentSessionId,
@@ -20,103 +42,153 @@ function App() {
     clearError,
     authRequired,
   } = useChat()
+
   const [sessionListOpen, setSessionListOpen] = useState(false)
   const [schemaOpen, setSchemaOpen] = useState(false)
-  const [showLogin, setShowLogin] = useState(false)
+  const [loginOpen, setLoginOpen] = useState(false)
   const token = getToken()
-  const displayLogin = showLogin || (authRequired && !token)
+  const showLoginForm = loginOpen || (authRequired && !token)
+
+  const handleNewChat = () => {
+    startNewSession()
+    setSessionListOpen(false)
+  }
 
   return (
-    <div className="flex flex-col h-screen bg-slate-100">
-      <header className="shrink-0 px-4 py-3 bg-white border-b border-slate-200 shadow-sm flex items-center justify-between flex-wrap gap-2">
-        <div>
-          <h1 className="text-xl font-semibold text-slate-800">DeepAgent SQL Chat</h1>
-          <p className="text-sm text-slate-500 mt-0.5">
-            Ask natural language questions — get SQL results
-          </p>
-        </div>
-        <div className="flex items-center gap-2">
-          {displayLogin ? (
-            <LoginForm
-              onSuccess={() => { setShowLogin(false); clearError() }}
-              onCancel={() => { setShowLogin(false); clearToken() }}
-              errorMessage={authRequired ? 'Please log in.' : undefined}
-            />
-          ) : (
-            <>
-              {token && token !== 'disabled' ? (
-                <button
-                  type="button"
-                  onClick={() => { clearToken(); setShowLogin(false) }}
-                  className="px-2 py-1 rounded text-slate-500 hover:bg-slate-100 text-sm"
-                >
-                  Log out
-                </button>
-              ) : (
-                <button
-                  type="button"
-                  onClick={() => setShowLogin(true)}
-                  className="px-2 py-1 rounded text-slate-600 hover:bg-slate-100 text-sm"
-                >
-                  Log in
-                </button>
-              )}
-              <button
-                type="button"
-                onClick={() => setSessionListOpen((o) => !o)}
-                className="shrink-0 px-3 py-1.5 rounded-md text-sm font-medium text-slate-600 bg-slate-100 hover:bg-slate-200"
-              >
-                Chats
-              </button>
-              <button
-                type="button"
-                onClick={startNewSession}
-                className="shrink-0 px-3 py-1.5 rounded-md text-sm font-medium text-slate-600 bg-slate-100 hover:bg-slate-200"
-              >
-                New chat
-              </button>
-              <button
-                type="button"
-                onClick={() => setSchemaOpen((o) => !o)}
-                className="shrink-0 px-3 py-1.5 rounded-md text-sm font-medium text-slate-600 bg-slate-100 hover:bg-slate-200"
-              >
-                {schemaOpen ? 'Hide' : 'Show'} schema
-              </button>
-            </>
-          )}
-        </div>
-      </header>
+    <Box sx={{ display: 'flex', height: '100vh', overflow: 'hidden', bgcolor: 'background.default' }}>
 
-      <div className="flex-1 flex min-h-0">
-        <SessionSidebar
-          isOpen={sessionListOpen}
-          onClose={() => setSessionListOpen(false)}
-          sessions={sessions}
-          currentSessionId={currentSessionId}
-          onNewChat={startNewSession}
-          onSelectSession={switchToSession}
-        />
-        <SchemaSidebar isOpen={schemaOpen} onClose={() => setSchemaOpen(false)} />
-        <main className="flex-1 flex flex-col min-h-0 min-w-0">
-          <ChatWindow messages={messages} />
-        <div className="shrink-0 p-4 border-t border-slate-200 bg-white">
-          {error && (
-            <div className="mb-2 flex items-center justify-between rounded-lg bg-red-50 border border-red-200 px-4 py-2 text-red-700 text-sm">
-              <span>{error}</span>
-              <button
-                type="button"
-                onClick={clearError}
-                className="text-red-600 hover:text-red-800 font-medium"
-              >
-                Dismiss
-              </button>
-            </div>
+      {/* ── AppBar ───────────────────────────────────────────────────── */}
+      <AppBar
+        position="fixed"
+        elevation={0}
+        sx={{
+          bgcolor: '#0f172a',
+          borderBottom: '1px solid rgba(255,255,255,0.08)',
+          zIndex: (t) => t.zIndex.drawer + 1,
+        }}
+      >
+        <Toolbar sx={{ gap: 0.5, minHeight: `${APPBAR_H}px !important` }}>
+          <Tooltip title="Conversations">
+            <IconButton
+              color="inherit"
+              onClick={() => setSessionListOpen((o) => !o)}
+              sx={{ mr: 0.5, color: sessionListOpen ? 'primary.light' : 'inherit' }}
+            >
+              <MenuIcon />
+            </IconButton>
+          </Tooltip>
+
+          <StorageRoundedIcon sx={{ color: '#818cf8', mr: 1, fontSize: 22 }} />
+          <Box sx={{ flexGrow: 1 }}>
+            <Typography variant="h6" sx={{ color: 'white', letterSpacing: '-0.02em', lineHeight: 1.2, fontSize: '1rem' }}>
+              DeepAgent SQL Chat
+            </Typography>
+            <Typography variant="caption" sx={{ color: '#64748b', display: { xs: 'none', sm: 'block' } }}>
+              Natural language → SQL results
+            </Typography>
+          </Box>
+
+          <Tooltip title="New chat">
+            <IconButton color="inherit" onClick={handleNewChat}>
+              <AddCommentOutlinedIcon />
+            </IconButton>
+          </Tooltip>
+
+          <Tooltip title={schemaOpen ? 'Hide schema' : 'Database schema'}>
+            <IconButton
+              color="inherit"
+              onClick={() => setSchemaOpen((o) => !o)}
+              sx={{ color: schemaOpen ? 'primary.light' : 'inherit' }}
+            >
+              <AccountTreeOutlinedIcon />
+            </IconButton>
+          </Tooltip>
+
+          {token && token !== 'disabled' ? (
+            <Tooltip title="Log out">
+              <IconButton color="inherit" onClick={() => { clearToken(); setLoginOpen(false) }}>
+                <LogoutIcon />
+              </IconButton>
+            </Tooltip>
+          ) : (
+            <Tooltip title="Log in">
+              <IconButton color="inherit" onClick={() => setLoginOpen(true)}>
+                <LoginIcon />
+              </IconButton>
+            </Tooltip>
           )}
-          <ChatInput onSend={sendMessage} disabled={isLoading} />
-        </div>
-        </main>
-      </div>
-    </div>
+        </Toolbar>
+      </AppBar>
+
+      {/* ── Session Drawer ───────────────────────────────────────────── */}
+      <SessionSidebar
+        isOpen={sessionListOpen}
+        onClose={() => setSessionListOpen(false)}
+        sessions={sessions}
+        currentSessionId={currentSessionId}
+        onNewChat={handleNewChat}
+        onSelectSession={(id) => {
+          switchToSession(id)
+          if (!isDesktop) setSessionListOpen(false)
+        }}
+      />
+
+      {/* ── Schema Drawer ────────────────────────────────────────────── */}
+      <SchemaSidebar isOpen={schemaOpen} onClose={() => setSchemaOpen(false)} />
+
+      {/* ── Main content ─────────────────────────────────────────────── */}
+      <Box
+        component="main"
+        sx={{
+          display: 'flex',
+          flexDirection: 'column',
+          flexGrow: 1,
+          height: '100vh',
+          pt: `${APPBAR_H}px`,
+          overflow: 'hidden',
+          bgcolor: 'background.default',
+        }}
+      >
+        <ChatWindow messages={messages} />
+
+        {/* Input bar */}
+        <Box
+          sx={{
+            flexShrink: 0,
+            px: 2,
+            py: 1.5,
+            bgcolor: 'background.paper',
+            borderTop: '1px solid',
+            borderColor: 'divider',
+          }}
+        >
+          <Box sx={{ maxWidth: 860, mx: 'auto' }}>
+            <ChatInput onSend={sendMessage} disabled={isLoading} />
+          </Box>
+        </Box>
+      </Box>
+
+      {/* ── Login Dialog ─────────────────────────────────────────────── */}
+      {showLoginForm && (
+        <LoginForm
+          onSuccess={() => { setLoginOpen(false); clearError() }}
+          onCancel={() => { setLoginOpen(false); clearToken() }}
+          errorMessage={authRequired ? 'Session expired. Please log in.' : undefined}
+        />
+      )}
+
+      {/* ── Error Snackbar ───────────────────────────────────────────── */}
+      <Snackbar
+        open={!!error && !authRequired}
+        anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
+        onClose={clearError}
+        autoHideDuration={6000}
+      >
+        <Alert severity="error" onClose={clearError} variant="filled" sx={{ width: '100%' }}>
+          {error}
+        </Alert>
+      </Snackbar>
+    </Box>
   )
 }
 

@@ -16,7 +16,6 @@ import uuid
 from typing import Any, AsyncGenerator
 
 from deepagents import create_deep_agent  # type: ignore
-from langchain.chat_models import init_chat_model  # type: ignore
 from langchain_core.tools import tool as lc_tool
 from langchain_openai import ChatOpenAI  # type: ignore
 from langgraph.checkpoint.memory import InMemorySaver  # type: ignore
@@ -142,18 +141,15 @@ class DeepAgent:
 
     async def _build_graph(self, schema_context: str):
         """Build (or rebuild) the deepagents supervisor graph."""
+        model_kwargs: dict[str, Any] = {
+            "model": settings.llm_model,
+            "api_key": settings.llm_api_key,
+            "max_tokens": settings.llm_max_tokens,
+            "temperature": settings.llm_temperature,
+        }
         if settings.llm_base_url:
-            # OpenAI-compatible endpoint (e.g. Qwen/DashScope)
-            model = ChatOpenAI(
-                model=settings.llm_model,
-                api_key=settings.llm_api_key,
-                base_url=settings.llm_base_url.rstrip("/"),
-                max_tokens=settings.llm_max_tokens,
-                temperature=settings.llm_temperature,
-            )
-        else:
-            model_name = f"openai:{settings.llm_model}"
-            model = init_chat_model(model=model_name)
+            model_kwargs["base_url"] = settings.llm_base_url.rstrip("/")
+        model = ChatOpenAI(**model_kwargs)
 
         sql_tool = self._make_execute_sql_tool()
 
@@ -283,9 +279,9 @@ class DeepAgent:
 
         # ── Persist conversation turn to Redis ───────────────────────────
         full_response = "".join(full_response_parts)
-        new_history = messages + [{"role": "assistant", "content": full_response}]
+        new_history = messages + \
+            [{"role": "assistant", "content": full_response}]
         # keep last 10 turns (20 messages)
         await set_session_history(session_id, new_history[-20:])
 
         yield AgentEvent(type=EventType.DONE)
-

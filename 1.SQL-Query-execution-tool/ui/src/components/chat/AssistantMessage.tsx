@@ -1,7 +1,10 @@
 /**
- * Renders assistant message with all AgentEvent types.
+ * Renders assistant message with all AgentEvent types — Material UI version.
  */
 
+import { Box, Paper, Typography, Chip, Stack } from '@mui/material'
+import CheckCircleOutlineRoundedIcon from '@mui/icons-material/CheckCircleOutlineRounded'
+import ErrorOutlineRoundedIcon from '@mui/icons-material/ErrorOutlineRounded'
 import type { AgentEvent } from '../../types/agent'
 import type { ChatMessage } from '../../hooks/useChat'
 import { ThinkingIndicator } from './ThinkingIndicator'
@@ -9,57 +12,83 @@ import { SqlBlock } from './SqlBlock'
 import { ResultTable } from './ResultTable'
 import { ResultChart } from './ResultChart'
 
-const THINKING_PAST_TENSE: Record<string, string> = {
-  'Analyzing your question...': 'Analyzed your question.',
-  'Generating SQL query...': 'Generated SQL query.',
-  'Executing SQL on database...': 'Executed SQL on database.',
+const THINKING_PAST: Record<string, string> = {
+  'Analyzing your question...': 'Analyzed question',
+  'Generating SQL query...': 'Generated SQL',
+  'Executing SQL on database...': 'Executed query',
 }
 
-function thinkingLabel(content: string | undefined, isComplete: boolean): string {
+function thinkingLabel(content: string | undefined, isDone: boolean): string {
   if (!content) return ''
-  if (isComplete && content in THINKING_PAST_TENSE) return THINKING_PAST_TENSE[content]
-  return content
+  return isDone && content in THINKING_PAST ? THINKING_PAST[content] : content
+}
+
+function lastResultIdx(events: AgentEvent[]): number {
+  let idx = -1
+  events.forEach((e, i) => { if (e.type === 'result') idx = i })
+  return idx
 }
 
 interface AssistantMessageProps {
   message: ChatMessage
 }
 
-/** Index of the last 'result' event; only that one is rendered to avoid duplicate charts. */
-function lastResultEventIndex(events: AgentEvent[]): number {
-  let idx = -1
-  events.forEach((e, i) => { if (e.type === 'result') idx = i })
-  return idx
-}
-
 export function AssistantMessage({ message }: AssistantMessageProps) {
   const { content, events = [], isStreaming } = message
-  const lastResultIdx = lastResultEventIndex(events)
+  const lastResult = lastResultIdx(events)
 
   return (
-    <div className="space-y-2">
-      {events.map((event, i) => (
-        <EventBlock
-          key={i}
-          event={event}
-          isComplete={!isStreaming}
-          showResult={event.type !== 'result' || i === lastResultIdx}
-        />
-      ))}
-      {content && (
-        <div className="prose prose-slate max-w-none text-slate-700">
-          <p className="whitespace-pre-wrap">
+    <Paper
+      elevation={0}
+      sx={{
+        border: '1px solid',
+        borderColor: 'divider',
+        borderRadius: '4px 16px 16px 16px',
+        p: 2,
+        bgcolor: 'background.paper',
+        boxShadow: '0 1px 4px rgba(0,0,0,0.06)',
+      }}
+    >
+      <Stack spacing={1.5}>
+        {events.map((event, i) => (
+          <EventBlock
+            key={i}
+            event={event}
+            isComplete={!isStreaming}
+            showResult={event.type !== 'result' || i === lastResult}
+          />
+        ))}
+
+        {content && (
+          <Typography
+            variant="body1"
+            sx={{ whiteSpace: 'pre-wrap', lineHeight: 1.75, color: 'text.primary' }}
+          >
             {content}
             {isStreaming && (
-              <span className="inline-block w-2 h-4 ml-0.5 bg-slate-500 animate-pulse align-middle" />
+              <Box
+                component="span"
+                sx={{
+                  display: 'inline-block',
+                  width: 2,
+                  height: '1em',
+                  ml: 0.5,
+                  bgcolor: 'primary.main',
+                  verticalAlign: 'text-bottom',
+                  animation: 'cursorBlink 1s step-end infinite',
+                  '@keyframes cursorBlink': {
+                    '0%, 100%': { opacity: 1 },
+                    '50%': { opacity: 0 },
+                  },
+                }}
+              />
             )}
-          </p>
-        </div>
-      )}
-      {!content && events.length === 0 && isStreaming && (
-        <ThinkingIndicator />
-      )}
-    </div>
+          </Typography>
+        )}
+
+        {!content && events.length === 0 && isStreaming && <ThinkingIndicator />}
+      </Stack>
+    </Paper>
   )
 }
 
@@ -74,49 +103,91 @@ function EventBlock({
 }) {
   switch (event.type) {
     case 'thinking':
-      return (
-        <div className="flex items-center gap-2 text-slate-500 text-sm">
-          {isComplete ? (
-            <span className="h-2 w-2 rounded-full bg-slate-400 shrink-0" aria-hidden />
-          ) : (
-            <ThinkingIndicator />
-          )}
-          <span>{thinkingLabel(event.content ?? undefined, isComplete)}</span>
-        </div>
+      return isComplete ? (
+        <Chip
+          icon={<CheckCircleOutlineRoundedIcon />}
+          label={thinkingLabel(event.content ?? undefined, true)}
+          size="small"
+          variant="outlined"
+          sx={{
+            alignSelf: 'flex-start',
+            height: 24,
+            borderColor: 'divider',
+            color: 'text.secondary',
+            fontSize: '0.75rem',
+            '& .MuiChip-icon': { color: 'success.main', fontSize: 14 },
+          }}
+        />
+      ) : (
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+          <ThinkingIndicator />
+          <Typography variant="caption" color="text.secondary">
+            {thinkingLabel(event.content ?? undefined, false)}
+          </Typography>
+        </Box>
       )
+
     case 'sql':
       return event.content ? <SqlBlock sql={event.content} /> : null
+
     case 'executing':
       return (
-        <div className="flex items-center gap-2 text-slate-500 text-sm">
-          <span className="animate-pulse">●</span>
-          <span>{event.content}</span>
-        </div>
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+          <Box
+            sx={{
+              width: 8,
+              height: 8,
+              borderRadius: '50%',
+              bgcolor: 'primary.main',
+              animation: 'execPulse 1.5s ease-in-out infinite',
+              '@keyframes execPulse': {
+                '0%, 100%': { opacity: 1, transform: 'scale(1)' },
+                '50%': { opacity: 0.3, transform: 'scale(0.85)' },
+              },
+            }}
+          />
+          <Typography variant="caption" color="text.secondary">
+            {event.content}
+          </Typography>
+        </Box>
       )
+
     case 'result':
       if (!showResult) return null
       return event.columns && event.rows ? (
-        <div className="space-y-2">
+        <Stack spacing={1.5}>
           <ResultChart columns={event.columns} rows={event.rows} />
           <ResultTable
             columns={event.columns}
             rows={event.rows}
             rowCount={event.row_count ?? event.rows.length}
           />
-        </div>
+        </Stack>
       ) : null
+
     case 'error':
       return (
-        <div className="rounded-lg bg-red-50 border border-red-200 px-4 py-2 text-red-700 text-sm">
-          {event.content}
-        </div>
+        <Box
+          sx={{
+            display: 'flex',
+            gap: 1,
+            alignItems: 'flex-start',
+            bgcolor: '#fef2f2',
+            border: '1px solid #fecaca',
+            borderRadius: 1.5,
+            p: 1.5,
+          }}
+        >
+          <ErrorOutlineRoundedIcon sx={{ color: 'error.main', fontSize: 18, mt: 0.1, flexShrink: 0 }} />
+          <Typography variant="body2" color="error.main">
+            {event.content}
+          </Typography>
+        </Box>
       )
-    case 'tool_call':
-      return null
-    case 'token':
-    case 'done':
-      return null
+
     default:
       return null
+  }
+}
   }
 }

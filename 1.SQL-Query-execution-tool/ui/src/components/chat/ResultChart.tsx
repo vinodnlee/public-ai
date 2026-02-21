@@ -15,6 +15,8 @@ import {
   Legend,
   ResponsiveContainer,
 } from 'recharts'
+import { Paper, Box, Typography } from '@mui/material'
+import BarChartRoundedIcon from '@mui/icons-material/BarChartRounded'
 
 interface ResultChartProps {
   columns: string[]
@@ -54,7 +56,7 @@ function getChartColumns(
   return { categoryCol, numericCols }
 }
 
-const CHART_COLORS = ['#475569', '#0ea5e9', '#10b981', '#f59e0b', '#ef4444']
+const CHART_COLORS = ['#6366f1', '#0ea5e9', '#22c55e', '#f59e0b', '#ef4444']
 
 export function ResultChart({ columns, rows }: ResultChartProps) {
   const chartCols = getChartColumns(columns, rows)
@@ -75,9 +77,17 @@ export function ResultChart({ columns, rows }: ResultChartProps) {
   const barsToShow = numericCols.slice(0, maxBars)
 
   return (
-    <div className="my-2 rounded-lg border border-slate-200 bg-white p-3">
-      <div className="text-xs text-slate-500 mb-2">Chart</div>
-      <div className="h-64">
+    <Paper
+      elevation={0}
+      sx={{ border: '1px solid', borderColor: 'divider', borderRadius: 2, p: 2, bgcolor: 'background.paper' }}
+    >
+      <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75, mb: 1.5 }}>
+        <BarChartRoundedIcon sx={{ fontSize: 16, color: 'primary.main' }} />
+        <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', fontSize: '0.68rem' }}>
+          Chart
+        </Typography>
+      </Box>
+      <Box sx={{ height: 240 }}>
         <ResponsiveContainer width="100%" height="100%">
           {numericCols.length === 1 && rows.length <= 20 ? (
             <BarChart data={data} margin={{ top: 5, right: 5, left: 5, bottom: 5 }}>
@@ -128,7 +138,7 @@ export function ResultChart({ columns, rows }: ResultChartProps) {
             </LineChart>
           )}
         </ResponsiveContainer>
-      </div>
-    </div>
+      </Box>
+    </Paper>
   )
 }
