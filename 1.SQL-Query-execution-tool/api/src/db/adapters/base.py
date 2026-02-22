@@ -1,110 +1,58 @@
-"""
-Abstract database adapter interface.
+"""Abstract database adapter interface."""
 
-All database implementations must implement this interface so the rest of
-the application remains completely database-agnostic.
-"""
-
+import re
 from abc import ABC, abstractmethod
 from typing import Any
 
 
 class DatabaseAdapter(ABC):
-    """
-    Generic database adapter interface.
-
-    Implement this class to add support for any relational database.
-    The application layer works exclusively against this interface —
-    no database-specific code leaks beyond the adapters package.
-    """
-
-    # ------------------------------------------------------------------
-    # Lifecycle
-    # ------------------------------------------------------------------
 
     @abstractmethod
-    async def connect(self) -> None:
-        """Initialise connection pool / engine."""
+    async def connect(self) -> None: ...
 
     @abstractmethod
-    async def disconnect(self) -> None:
-        """Close all connections and release resources."""
+    async def disconnect(self) -> None: ...
 
     @abstractmethod
-    async def ping(self) -> bool:
-        """Return True if the database is reachable."""
-
-    # ------------------------------------------------------------------
-    # Query execution
-    # ------------------------------------------------------------------
+    async def ping(self) -> bool: ...
 
     @abstractmethod
     async def execute_query(self, sql: str) -> dict[str, Any]:
-        """
-        Execute a read-only SELECT query.
-
-        Returns:
-            {
-                "columns": list[str],
-                "rows":    list[dict[str, Any]],
-                "row_count": int,
-            }
-
-        Raises:
-            ValueError: if the statement is not a SELECT.
-            RuntimeError: on database execution errors.
-        """
-
-    # ------------------------------------------------------------------
-    # Schema introspection
-    # ------------------------------------------------------------------
+        """Execute a read-only SELECT. Returns {columns, rows, row_count}."""
 
     @abstractmethod
-    async def get_tables(self) -> list[str]:
-        """Return all user-accessible table names."""
+    async def get_tables(self) -> list[str]: ...
 
     @abstractmethod
     async def get_columns(self, table_name: str) -> list[dict[str, Any]]:
-        """
-        Return column metadata for a table.
-
-        Each entry:
-            {
-                "column":   str,
-                "type":     str,
-                "nullable": str,   # "YES" | "NO"
-                "default":  str | None,
-            }
-        """
+        """Return [{column, type, nullable, default}, ...]."""
 
     @abstractmethod
     async def get_foreign_keys(self, table_name: str) -> list[dict[str, Any]]:
-        """
-        Return foreign key relationships for a table.
-
-        Each entry:
-            {
-                "column":            str,
-                "foreign_table":     str,
-                "foreign_column":    str,
-            }
-        """
-
-    # ------------------------------------------------------------------
-    # Helpers
-    # ------------------------------------------------------------------
+        """Return [{column, foreign_table, foreign_column}, ...]."""
 
     @property
     @abstractmethod
-    def dialect(self) -> str:
-        """Human-readable identifier, e.g. 'postgresql', 'mysql', 'sqlite'."""
+    def dialect(self) -> str: ...
+
+    def verify_read_only(self, sql: str) -> None:
+        """Throw ValueError if the SQL contains mutating keywords."""
+        sql_upper = sql.upper()
+        # Only allow SELECT and WITH prefixes (ignoring leading whitespace/comments for a simple check)
+        # More robust check: deny list of DML/DDL commands
+        forbidden = [
+            r"\bINSERT\b", r"\bUPDATE\b", r"\bDELETE\b", r"\bDROP\b",
+            r"\bALTER\b", r"\bTRUNCATE\b", r"\bGRANT\b", r"\bREVOKE\b",
+            r"\bEXEC\b", r"\bEXECUTE\b", r"\bCALL\b", r"\bREPLACE\b",
+            r"\bCREATE\b", r"\bMERGE\b"
+        ]
+        
+        for pattern in forbidden:
+            if re.search(pattern, sql_upper):
+                raise ValueError(f"Potentially unsafe SQL detected. Keyword matched: {pattern.replace(r'\b', '')}")
 
     async def get_schema_context(self) -> str:
-        """
-        Return a formatted schema string suitable for injection into an LLM prompt.
-        Default implementation builds from get_tables / get_columns / get_foreign_keys.
-        Adapters may override this to provide richer output.
-        """
+        """Build a formatted schema string for LLM prompt injection."""
         tables = await self.get_tables()
         lines: list[str] = [f"Database dialect: {self.dialect}\n\nSchema:\n"]
         for table in tables:

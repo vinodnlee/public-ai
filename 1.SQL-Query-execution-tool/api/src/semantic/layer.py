@@ -1,55 +1,23 @@
-"""
-Semantic layer.
+"""Semantic layer — merges raw DB schema with business-level descriptions."""
 
-Merges raw database schema (from any DatabaseAdapter) with
-business-level descriptions (from SemanticRegistry) to produce
-a rich, LLM-ready context string.
-
-This is the single component the agent interacts with — it has
-no knowledge of which database or which semantic definitions
-are in use.
-"""
-
+from src.log import get_logger
 from src.db.adapters.base import DatabaseAdapter
 from src.semantic.models import SemanticTable
 from src.semantic.registry import SemanticRegistry, get_default_registry
 
+logger = get_logger(__name__)
+
 
 class SemanticLayer:
-    """
-    Combines physical schema metadata with semantic table/column descriptions.
 
-    The output of build_prompt_context() is injected directly into the
-    DeepAgent system prompt so the LLM understands:
-      - what tables exist (physical schema)
-      - what each table/column *means* (semantic description)
-      - example queries (few-shot hints)
-    """
-
-    def __init__(
-        self,
-        adapter: DatabaseAdapter,
-        registry: SemanticRegistry | None = None,
-    ) -> None:
+    def __init__(self, adapter: DatabaseAdapter, registry: SemanticRegistry | None = None) -> None:
         self._adapter = adapter
         self._registry = registry or get_default_registry()
 
-    # ------------------------------------------------------------------
-    # Public API
-    # ------------------------------------------------------------------
-
     async def build_prompt_context(self) -> str:
-        """
-        Build the full schema + semantic context string for LLM prompting.
-
-        Strategy:
-          1. Fetch all tables from the database via the adapter.
-          2. For each table, check if the semantic registry has a definition.
-             - If yes: use the rich semantic description to build the fragment.
-             - If no:  fall back to raw schema column names + types.
-          3. Concatenate everything into a single string.
-        """
+        """Build the full schema + semantic context string for LLM prompting."""
         physical_tables = await self._adapter.get_tables()
+        logger.info("Building prompt context | tables=%d", len(physical_tables))
         sections: list[str] = [
             f"Database dialect: {self._adapter.dialect}\n",
             "=== DATABASE SCHEMA & SEMANTIC CONTEXT ===\n",
@@ -58,8 +26,7 @@ class SemanticLayer:
         for table_name in physical_tables:
             semantic = self._registry.get(table_name)
             if semantic:
-                sections.append(
-                    self._build_semantic_section(table_name, semantic))
+                sections.append(self._build_semantic_section(table_name, semantic))
             else:
                 sections.append(await self._build_raw_section(table_name))
 
@@ -67,10 +34,7 @@ class SemanticLayer:
         return "\n".join(sections)
 
     async def enrich_table(self, table_name: str) -> dict:
-        """
-        Return a merged view of the physical schema + semantic definitions
-        for a single table. Used by the Schema Inspector API endpoint.
-        """
+        """Merged view of physical schema + semantic definitions for one table."""
         physical_columns = await self._adapter.get_columns(table_name)
         foreign_keys = await self._adapter.get_foreign_keys(table_name)
         fk_map = {fk["column"]: fk for fk in foreign_keys}
@@ -93,6 +57,7 @@ class SemanticLayer:
                 }
             )
 
+        logger.debug("Enriched table=%s | columns=%d", table_name, len(enriched_columns))
         return {
             "table":        table_name,
             "display_name": semantic.display_name if semantic else table_name,
@@ -103,7 +68,6 @@ class SemanticLayer:
         }
 
     async def list_tables(self) -> list[dict]:
-        """Return a summary list of all tables with semantic display names."""
         physical_tables = await self._adapter.get_tables()
         result = []
         for name in physical_tables:
@@ -118,18 +82,10 @@ class SemanticLayer:
             )
         return result
 
-    # ------------------------------------------------------------------
-    # Private helpers
-    # ------------------------------------------------------------------
-
-    def _build_semantic_section(
-        self, table_name: str, semantic: SemanticTable
-    ) -> str:
-        """Use rich semantic description when available."""
+    def _build_semantic_section(self, table_name: str, semantic: SemanticTable) -> str:
         return semantic.to_prompt_fragment() + "\n"
 
     async def _build_raw_section(self, table_name: str) -> str:
-        """Fall back to raw physical schema when no semantic entry exists."""
         columns = await self._adapter.get_columns(table_name)
         fks = {fk["column"]: fk for fk in await self._adapter.get_foreign_keys(table_name)}
         lines = [f"Table: {table_name} [no semantic definition]"]
@@ -139,6 +95,5 @@ class SemanticLayer:
             if col["column"] in fks:
                 fk = fks[col["column"]]
                 fk_hint = f" → {fk['foreign_table']}.{fk['foreign_column']}"
-            lines.append(
-                f"  - {col['column']} ({col['type']}, {nullable}){fk_hint}")
+            lines.append(f"  - {col['column']} ({col['type']}, {nullable}){fk_hint}")
         return "\n".join(lines) + "\n"

@@ -169,6 +169,6 @@ export function ResultTable({ columns, rows, rowCount }: ResultTableProps) {
           Download CSV
         </button>
       </div>
-    </div>
+    </div >
   )
 }

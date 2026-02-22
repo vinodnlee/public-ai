@@ -18,9 +18,9 @@ async def test_execute_query_returns_columns_and_rows(sqlite_adapter) -> None:
 
 @pytest.mark.asyncio
 async def test_execute_query_select_only(sqlite_adapter) -> None:
-    with pytest.raises(ValueError, match="Only SELECT"):
+    with pytest.raises(ValueError, match="Potentially unsafe SQL detected"):
         await sqlite_adapter.execute_query("INSERT INTO test_users (id, name) VALUES (3, 'c')")
-    with pytest.raises(ValueError, match="Only SELECT"):
+    with pytest.raises(ValueError, match="Potentially unsafe SQL detected"):
         await sqlite_adapter.execute_query("DELETE FROM test_users")
 
 

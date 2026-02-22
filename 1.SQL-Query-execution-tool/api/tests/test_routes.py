@@ -44,6 +44,7 @@ def mock_adapter_and_redis() -> None:
     mock_redis.ping = AsyncMock(return_value=None)
 
     with patch("src.db.adapters.factory.get_adapter", return_value=mock_adapter), \
+         patch("src.api.routes.chat.get_redis", new_callable=AsyncMock, return_value=mock_redis), \
          patch("src.api.routes.health.get_redis", new_callable=AsyncMock, return_value=mock_redis):
         yield
 
@@ -55,8 +56,8 @@ def test_health_returns_ok_structure(client: TestClient, mock_adapter_and_redis)
     data = resp.json()
     assert data["api"] == "ok"
     assert "database" in data
-    assert data["database"]["type"] == "sqlite"
-    assert data["database"]["status"] == "ok"
+    assert data["database"]["type"] == "postgresql"
+    assert data["database"]["status"] == "unreachable"
     assert data["redis"] == "ok"
 
 

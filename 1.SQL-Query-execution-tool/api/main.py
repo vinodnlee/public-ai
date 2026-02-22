@@ -6,6 +6,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from src.api.routes import auth, chat, health, schema
 from src.config.settings import get_settings
 from src.db.adapters.factory import get_adapter
+from src.utils.db import check_db_connection
 
 settings = get_settings()
 
@@ -15,15 +16,21 @@ async def lifespan(app: FastAPI):
     """Connect the database adapter on startup, disconnect on shutdown."""
     adapter = get_adapter()
     await adapter.connect()
+    
+    # Verify the connection is actually alive before accepting traffic
+    await check_db_connection(adapter)
+    
     yield
     await adapter.disconnect()
+    
+    from src.cache.redis_client import close_redis
+    await close_redis()
 
 
 def create_app() -> FastAPI:
     app = FastAPI(
         title="DeepAgent SQL Chat API",
         version="0.1.0",
-        # 非 production 时启用 Swagger，便于本地调试
         docs_url="/docs" if settings.app_env != "production" else None,
         lifespan=lifespan,
     )

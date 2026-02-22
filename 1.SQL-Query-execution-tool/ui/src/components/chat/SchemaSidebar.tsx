@@ -306,6 +306,6 @@ export function SchemaSidebar({ isOpen, onClose }: SchemaSidebarProps) {
           </div>
         )}
       </div>
-    </div>
+    </div >
   )
 }

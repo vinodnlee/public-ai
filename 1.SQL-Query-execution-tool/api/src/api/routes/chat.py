@@ -3,16 +3,18 @@ import uuid
 from fastapi import APIRouter, Depends, Request
 from fastapi.responses import JSONResponse
 from sse_starlette.sse import EventSourceResponse
+from src.log import get_logger
 from src.agent.deep_agent import DeepAgent
 from src.api.schemas import ChatRequest, ChatInitResponse
 from src.auth.jwt import get_current_user
 from src.cache.redis_client import get_redis
 from src.db.adapters.factory import get_adapter
 
+logger = get_logger(__name__)
 router = APIRouter(prefix="/chat", tags=["chat"])
 
-_PENDING_TTL = 60   # seconds — stream must be opened within 60 s of POST
-_CLAIMED_TTL = 30   # seconds — retry window after first connection attempt
+_PENDING_TTL = 60
+_CLAIMED_TTL = 30
 
 
 async def _set_pending(stream_id: str, request: ChatRequest) -> None:
@@ -21,26 +23,19 @@ async def _set_pending(stream_id: str, request: ChatRequest) -> None:
 
 
 async def _claim_pending(stream_id: str) -> ChatRequest | None:
-    """
-    Atomically move pending:{id} → claimed:{id}.
-    First connection claims and copies to claimed key (short TTL for retries).
-    Subsequent EventSource retries within _CLAIMED_TTL still succeed.
-    """
+    """Atomically move pending → claimed. Supports EventSource retries."""
     redis = await get_redis()
     pending_key = f"pending:{stream_id}"
     claimed_key = f"claimed:{stream_id}"
 
-    # Check if already claimed (EventSource retry)
     data = await redis.get(claimed_key)
     if data:
         return ChatRequest.model_validate_json(data)
 
-    # First hit: claim it
     data = await redis.getdel(pending_key)
     if data is None:
         return None
 
-    # Store under claimed key for retry window
     await redis.setex(claimed_key, _CLAIMED_TTL, data)
     return ChatRequest.model_validate_json(data)
 
@@ -55,11 +50,8 @@ async def initiate_chat(
     request: ChatRequest,
     _user: dict = Depends(get_current_user),
 ) -> JSONResponse:
-    """
-    Accept the user query.
-    Returns a stream_url the UI opens via EventSource.
-    """
     stream_id = str(uuid.uuid4())
+    logger.info("Chat initiated | session=%s stream=%s", request.session_id, stream_id)
     await _set_pending(stream_id, request)
     return JSONResponse(
         content={
@@ -75,16 +67,14 @@ async def stream_chat(
     request: Request,
     _user: dict = Depends(get_current_user),
 ) -> EventSourceResponse:
-    """
-    SSE endpoint — streams DeepAgent events (text/event-stream) to the UI.
-    The adapter is resolved by the factory; no route knows which DB is used.
-    """
     chat_request = await _claim_pending(stream_id)
     if not chat_request:
+        logger.warning("Invalid or expired stream_id=%s", stream_id)
         return EventSourceResponse(
             _error_stream("Invalid or expired stream ID"), status_code=404
         )
 
+    logger.info("Streaming started | stream=%s session=%s", stream_id, chat_request.session_id)
     adapter = get_adapter()
     agent = DeepAgent(adapter=adapter)
 
@@ -95,22 +85,18 @@ async def stream_chat(
                 session_id=chat_request.session_id,
             ):
                 if await request.is_disconnected():
+                    logger.info("Client disconnected | stream=%s", stream_id)
                     break
                 yield {"data": json.dumps(event.model_dump(exclude_none=True))}
         except Exception as exc:
-            # Send a final error event so the UI knows why the stream stopped
+            logger.error("Stream error | stream=%s error=%s", stream_id, exc)
             yield {"data": json.dumps({"type": "error", "content": str(exc)})}
         finally:
-            # Clean up claimed key — no more retries needed
             await _delete_claimed(stream_id)
 
     return EventSourceResponse(
         event_generator(),
-        headers={
-            # Prevent any upstream proxy or browser from buffering SSE
-            "X-Accel-Buffering": "no",
-            "Cache-Control": "no-cache",
-        },
+        headers={"X-Accel-Buffering": "no", "Cache-Control": "no-cache"},
     )
 
 

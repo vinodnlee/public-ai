@@ -6,13 +6,8 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
 class Settings(BaseSettings):
-    model_config = SettingsConfigDict(
-        env_file=".env",
-        env_file_encoding="utf-8",
-        case_sensitive=False,
-    )
+    model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8", case_sensitive=False)
 
-    # Application
     app_env: str = "development"
     app_host: str = "0.0.0.0"
     app_port: int = 8000
@@ -21,19 +16,15 @@ class Settings(BaseSettings):
     @field_validator("cors_origins", mode="before")
     @classmethod
     def parse_cors_origins(cls, v: object) -> list[str]:
-        """Accept comma-separated string from .env (e.g. CORS_ORIGINS=http://localhost:3000)."""
         if isinstance(v, list):
             return v
         if isinstance(v, str):
             return [x.strip() for x in v.split(",") if x.strip()]
         return ["http://localhost:3000"]
 
-    # ----------------------------------------------------------------
-    # Database — generic
-    # ----------------------------------------------------------------
-    db_type: str = "postgresql"   # postgresql | mysql | sqlite
+    # Database
+    db_type: str = "postgresql"
 
-    # PostgreSQL
     postgres_host: str = "localhost"
     postgres_port: int = 5432
     postgres_db: str = "chatdb"
@@ -42,7 +33,6 @@ class Settings(BaseSettings):
     postgres_pool_size: int = 10
     postgres_max_overflow: int = 20
 
-    # MySQL
     mysql_host: str = "localhost"
     mysql_port: int = 3306
     mysql_db: str = "chatdb"
@@ -51,7 +41,6 @@ class Settings(BaseSettings):
     mysql_pool_size: int = 10
     mysql_max_overflow: int = 20
 
-    # SQLite
     sqlite_path: str = "./local.db"
 
     # Redis
@@ -64,7 +53,7 @@ class Settings(BaseSettings):
     llm_provider: str = "openai"
     llm_model: str = "gpt-4o"
     llm_api_key: str = ""
-    llm_base_url: str = ""  # optional; e.g. Qwen/DashScope: https://dashscope.aliyuncs.com/compatible-mode/v1
+    llm_base_url: str = ""
     llm_max_tokens: int = 4096
     llm_temperature: float = 0.0
 
@@ -79,10 +68,6 @@ class Settings(BaseSettings):
     jwt_expire_minutes: int = 60
     admin_username: str = "admin"
     admin_password: str = "admin"
-
-    # ------------------------------------------------------------------
-    # Computed DSNs
-    # ------------------------------------------------------------------
 
     @property
     def postgres_dsn(self) -> str:
