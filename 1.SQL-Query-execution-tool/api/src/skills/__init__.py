@@ -8,6 +8,10 @@ from src.skills.registry import (
     get_tools_for_target,
     clear_registry,
 )
+from src.skills.export_csv import register_export_csv_skill
+
+# Register built-in skills so they are available when enabled via config.
+register_export_csv_skill()
 
 __all__ = [
     "Skill",
