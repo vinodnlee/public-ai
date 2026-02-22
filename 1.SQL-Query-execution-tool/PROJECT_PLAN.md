@@ -405,4 +405,4 @@ After each subtask: git commit, then add one row below with date, task id, and c
 | 2026-02-19 | C.2: Inject SKILL.md into prompt | 94a9643 |
 | 2026-02-19 | C.3: MCP client + tool conversion | 7e70f7e |
 | 2026-02-19 | C.4: Wire MCP tools into builder | dd3c3bd |
-| 2026-02-19 | D.1–D.3: MCP server + mount + docs | 6636d95 |
+| 2026-02-19 | D.1–D.3: MCP server + mount + docs | e0be60d |
