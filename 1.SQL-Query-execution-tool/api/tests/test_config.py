@@ -43,3 +43,9 @@ def test_skill_dirs_parses_comma_separated_env(monkeypatch: pytest.MonkeyPatch) 
     monkeypatch.setenv("SKILL_DIRS", "/path/to/cursor/skills,/path/to/codex/skills")
     s = Settings()
     assert s.skill_dirs == ["/path/to/cursor/skills", "/path/to/codex/skills"]
+
+
+def test_checkpointer_type_default_is_memory() -> None:
+    """Default checkpointer_type should be 'memory'."""
+    s = Settings()
+    assert s.checkpointer_type == "memory"

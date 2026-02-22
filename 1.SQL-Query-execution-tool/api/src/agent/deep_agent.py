@@ -1,9 +1,8 @@
 import uuid
 from typing import AsyncGenerator
 
-from langgraph.checkpoint.memory import InMemorySaver  # type: ignore
-
 from src.log import get_logger
+from src.agent.checkpointer import get_checkpointer
 from src.agent.deepagent_builder import build_supervisor_graph
 from src.agent.events import AgentEvent, EventType
 from src.config.settings import get_settings
@@ -22,7 +21,7 @@ class DeepAgent:
     def __init__(self, adapter: DatabaseAdapter) -> None:
         self._adapter = adapter
         self._semantic_layer = SemanticLayer(adapter)
-        self._checkpointer = InMemorySaver()
+        self._checkpointer = get_checkpointer(settings)
         self._captured_events: list[AgentEvent] = []
         self._thread_map: dict[str, str] = {}
         logger.info("DeepAgent initialised | dialect=%s", adapter.dialect)

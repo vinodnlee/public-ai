@@ -63,6 +63,9 @@ class Settings(BaseSettings):
     redis_db: int = 0
     redis_ttl_seconds: int = 3600
 
+    # Checkpointer (memory | redis; redis requires langgraph-checkpoint-redis)
+    checkpointer_type: str = "memory"
+
     # LLM
     llm_provider: str = "openai"
     llm_model: str = "gpt-4o"
