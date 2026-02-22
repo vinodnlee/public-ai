@@ -392,7 +392,7 @@ After each subtask: git commit, then add one row below with date, task id, and c
 
 | Date | Task | Commit |
 |------|------|--------|
-| 2026-02-19 | A.1: Settings for skills | (pending commit) |
+| 2026-02-19 | A.1: Settings for skills | 3d3bbbe |
 | | A.2: Skill registry | |
 | | A.3: Built-in skill (e.g. export_result_csv) | |
 | | A.4: Wire skills into builder | |
