@@ -4,12 +4,13 @@
  */
 
 export type EventType =
+  | 'plan'
   | 'thinking'
   | 'tool_call'
   | 'sql'
   | 'executing'
   | 'result'
-  | 'token'
+  | 'answer'
   | 'error'
   | 'done'
 

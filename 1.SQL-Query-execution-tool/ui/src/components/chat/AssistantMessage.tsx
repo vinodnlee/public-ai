@@ -102,6 +102,25 @@ function EventBlock({
   showResult: boolean
 }) {
   switch (event.type) {
+    case 'plan':
+      return (
+        <Box
+          sx={{
+            bgcolor: '#f0f9ff',
+            border: '1px solid #bae6fd',
+            borderRadius: 1.5,
+            p: 1.5,
+          }}
+        >
+          <Typography variant="body2" color="primary.dark" sx={{ fontWeight: 500 }}>
+            📋 Plan
+          </Typography>
+          <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5, whiteSpace: 'pre-wrap' }}>
+            {event.content}
+          </Typography>
+        </Box>
+      )
+
     case 'thinking':
       return isComplete ? (
         <Chip

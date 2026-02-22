@@ -4,12 +4,13 @@ from pydantic import BaseModel
 
 
 class EventType(str, Enum):
+    PLAN = "plan"
     THINKING = "thinking"
     TOOL_CALL = "tool_call"
     SQL = "sql"
     EXECUTING = "executing"
     RESULT = "result"
-    TOKEN = "token"
+    ANSWER = "answer"
     ERROR = "error"
     DONE = "done"
 

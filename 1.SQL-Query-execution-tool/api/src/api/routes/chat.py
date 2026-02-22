@@ -1,7 +1,7 @@
 import json
 import uuid
 from fastapi import APIRouter, Depends, Request
-from fastapi.responses import JSONResponse
+from fastapi.responses import JSONResponse, StreamingResponse
 from sse_starlette.sse import EventSourceResponse
 from src.log import get_logger
 from src.agent.deep_agent import DeepAgent
@@ -97,6 +97,37 @@ async def stream_chat(
     return EventSourceResponse(
         event_generator(),
         headers={"X-Accel-Buffering": "no", "Cache-Control": "no-cache"},
+    )
+
+
+@router.post("/direct")
+async def direct_chat(
+    chat_request: ChatRequest,
+    _user: dict = Depends(get_current_user),
+) -> StreamingResponse:
+    """
+    Direct one-step chat endpoint. Best for testing in Swagger.
+    Returns a stream of events immediately.
+    """
+    logger.info("Direct chat initiated | session=%s", chat_request.session_id)
+    adapter = get_adapter()
+    agent = DeepAgent(adapter=adapter)
+
+    async def event_generator():
+        try:
+            async for event in agent.run(
+                query=chat_request.query,
+                session_id=chat_request.session_id,
+            ):
+                # Standard SSE format
+                yield f"data: {json.dumps(event.model_dump(exclude_none=True))}\n\n"
+        except Exception as exc:
+            logger.error("Direct stream error | error=%s", exc)
+            yield f"data: {json.dumps({'type': 'error', 'content': str(exc)})}\n\n"
+
+    return StreamingResponse(
+        event_generator(), 
+        media_type="text/event-stream"
     )
 
 

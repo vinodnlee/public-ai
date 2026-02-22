@@ -1,5 +1,3 @@
-"""Get Schema Context tool — returns semantic + physical schema for LLM prompts."""
-
 from langchain_core.tools import InjectedToolArg, tool
 from typing_extensions import Annotated
 
@@ -10,7 +8,7 @@ logger = get_logger(__name__)
 
 
 @tool(parse_docstring=True)
-async def get_schema_context(
+async def get_schema_context_tool(
     semantic_layer: Annotated[SemanticLayer, InjectedToolArg],
 ) -> str:
     """Return the full semantic + physical schema context for the LLM prompt.

@@ -129,8 +129,8 @@ export function useChat(): UseChatReturn {
           stream_url,
           (event, closeStream) => {
             events.push(event)
-            if (event.type === 'token' && event.content) {
-              textContent += event.content
+            if (event.type === 'answer' && event.content) {
+              textContent = event.content
             }
             if (event.type === 'done') {
               closeStream()

@@ -1,9 +1,6 @@
-"""Execute SQL tool — runs a read-only SELECT and returns JSON results."""
-
 import json
 import re
-from typing import Any
-
+from typing import Any, List
 from langchain_core.tools import InjectedToolArg, tool
 from typing_extensions import Annotated
 

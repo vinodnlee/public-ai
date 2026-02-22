@@ -5,7 +5,7 @@ from langgraph.checkpoint.memory import InMemorySaver  # type: ignore
 
 from src.log import get_logger
 from src.agent.deepagent_builder import build_supervisor_graph
-from src.agent.events import AgentEvent, EventType
+from src.agent.events import AgentEvent
 from src.config.settings import get_settings
 from src.db.adapters.base import DatabaseAdapter
 from src.semantic.layer import SemanticLayer
@@ -34,9 +34,8 @@ class DeepAgent:
         if session_id not in self._thread_map:
             self._thread_map[session_id] = uuid.uuid4().hex
         thread_id = self._thread_map[session_id]
-        logger.info("run | session=%s thread=%s query=%s", session_id, thread_id, query[:80])
-
-        yield AgentEvent(type=EventType.THINKING, content="Analyzing your question...")
+        logger.info("run | session=%s thread=%s query=%s",
+                    session_id, thread_id, query[:80])
 
         graph = build_supervisor_graph(
             self._adapter,
@@ -51,7 +50,8 @@ class DeepAgent:
         input_payload = {"messages": messages}
         full_response_parts: list[str] = []
 
-        graph_stream = graph.astream_events(input_payload, config=config, version="v2")
+        graph_stream = graph.astream_events(
+            input_payload, config=config, version="v2")
 
         async for event in stream_agent_events(
             graph_stream, query, self._captured_events, full_response_parts
@@ -60,6 +60,7 @@ class DeepAgent:
 
         full_response = "".join(full_response_parts)
         await save_chat_response(session_id, messages, full_response)
-        logger.info("run complete | session=%s response_len=%d", session_id, len(full_response))
+        logger.info("run complete | session=%s response_len=%d",
+                    session_id, len(full_response))
 
         yield AgentEvent(type=EventType.DONE)
