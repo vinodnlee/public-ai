@@ -83,3 +83,26 @@ def test_build_supervisor_graph_injects_skill_docs_into_prompt(
                 prompt = call_kw["system_prompt"]
                 assert "Use this skill to test prompt injection" in prompt
                 assert "Test Skill" in prompt
+
+
+@patch("src.agent.deepagent_builder.get_llm")
+def test_build_supervisor_graph_includes_mcp_tools_when_returned(
+    m_llm: MagicMock, mock_deps: tuple
+) -> None:
+    """When get_mcp_tools_for_supervisor returns tools, they are included in the graph."""
+    m_llm.return_value = MagicMock()
+    adapter, semantic_layer, captured_events, checkpointer = mock_deps
+    mock_mcp_tool = MagicMock()
+    mock_mcp_tool.name = "mcp_echo"
+    with patch("src.agent.deepagent_builder.get_settings") as m_get:
+        m_get.return_value.enabled_skills = []
+        m_get.return_value.skill_dirs = []
+        with patch("src.agent.deepagent_builder.get_mcp_tools_for_supervisor") as m_mcp:
+            m_mcp.return_value = [mock_mcp_tool]
+            with patch("src.agent.deepagent_builder.create_deep_agent") as m_create:
+                m_create.return_value = MagicMock()
+                build_supervisor_graph(adapter, semantic_layer, captured_events, checkpointer)
+                call_kw = m_create.call_args[1]
+                tools = call_kw["tools"]
+                tool_names = [getattr(t, "name", None) for t in tools]
+                assert "mcp_echo" in tool_names

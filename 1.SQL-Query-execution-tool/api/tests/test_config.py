@@ -49,3 +49,17 @@ def test_checkpointer_type_default_is_memory() -> None:
     """Default checkpointer_type should be 'memory'."""
     s = Settings()
     assert s.checkpointer_type == "memory"
+
+
+def test_mcp_servers_default_is_empty_list() -> None:
+    """Default mcp_servers should be an empty list."""
+    s = Settings()
+    assert s.mcp_servers == []
+
+
+def test_mcp_servers_parses_comma_separated_env(monkeypatch: pytest.MonkeyPatch) -> None:
+    """MCP_SERVERS env var should be parsed into a list."""
+    monkeypatch.setenv("MCP_SERVERS", "http://localhost:8080,stdio:node:server.js")
+    s = Settings()
+    assert "http://localhost:8080" in s.mcp_servers
+    assert "stdio:node:server.js" in s.mcp_servers

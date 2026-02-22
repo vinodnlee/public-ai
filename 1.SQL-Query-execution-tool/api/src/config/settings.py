@@ -82,6 +82,9 @@ class Settings(BaseSettings):
     enabled_skills: Union[str, list[str]] = []
     skill_dirs: Union[str, list[str]] = []
 
+    # MCP (Part II: agent calls external MCP tools)
+    mcp_servers: Union[str, list[str]] = []
+
     @field_validator("enabled_skills", mode="before")
     @classmethod
     def parse_enabled_skills(cls, v: object) -> list[str]:
@@ -90,6 +93,11 @@ class Settings(BaseSettings):
     @field_validator("skill_dirs", mode="before")
     @classmethod
     def parse_skill_dirs(cls, v: object) -> list[str]:
+        return _parse_list_env(v)
+
+    @field_validator("mcp_servers", mode="before")
+    @classmethod
+    def parse_mcp_servers(cls, v: object) -> list[str]:
         return _parse_list_env(v)
 
     # JWT Auth

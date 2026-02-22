@@ -14,6 +14,7 @@ from src.prompts.supervisor import SUPERVISOR_PROMPT_TEMPLATE
 from src.tools.get_schema_context import get_schema_context_tool
 from src.skills import get_tools_for_target, load_skills_from_dirs
 from src.skills.registry import SkillTarget
+from src.mcp.client import get_mcp_tools_for_supervisor
 
 logger = get_logger(__name__)
 
@@ -55,7 +56,8 @@ def build_supervisor_graph(
     )
 
     skill_tools = get_tools_for_target(settings.enabled_skills, SkillTarget.SUPERVISOR)
-    tools = [get_schema_context] + skill_tools
+    mcp_tools = get_mcp_tools_for_supervisor(settings)
+    tools = [get_schema_context] + skill_tools + mcp_tools
 
     logger.debug("Building supervisor graph with schema tool and %d skill tools", len(skill_tools))
     return create_deep_agent(
