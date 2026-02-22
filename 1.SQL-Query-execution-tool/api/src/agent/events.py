@@ -24,6 +24,7 @@ class AgentEvent(BaseModel):
     rows: list[dict[str, Any]] | None = None
     columns: list[str] | None = None
     row_count: int | None = None
-    # HITL: set when type is INTERRUPT
+    # HITL: set when type is INTERRUPT (thread_id so client can call approve)
     proposed_sql: str | None = None
     nl_query: str | None = None
+    thread_id: str | None = None

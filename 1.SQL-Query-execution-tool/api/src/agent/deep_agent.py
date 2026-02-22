@@ -1,5 +1,7 @@
 import uuid
-from typing import AsyncGenerator
+from typing import Any, AsyncGenerator
+
+from langgraph.types import Command
 
 from src.log import get_logger
 from src.agent.checkpointer import get_checkpointer
@@ -55,11 +57,49 @@ class DeepAgent:
         async for event in stream_agent_events(
             graph_stream, query, self._captured_events, full_response_parts
         ):
+            if event.type == EventType.INTERRUPT:
+                event = AgentEvent(
+                    type=EventType.INTERRUPT,
+                    proposed_sql=event.proposed_sql,
+                    nl_query=event.nl_query,
+                    thread_id=thread_id,
+                )
             yield event
 
         full_response = "".join(full_response_parts)
         await save_chat_response(session_id, messages, full_response)
         logger.info("run complete | session=%s response_len=%d",
                     session_id, len(full_response))
+
+        yield AgentEvent(type=EventType.DONE)
+
+    async def resume(
+        self,
+        thread_id: str,
+        session_id: str,
+        decisions: list[dict[str, Any]],
+    ) -> AsyncGenerator[AgentEvent, None]:
+        """Resume the graph after HITL interrupt; yield continuation events."""
+        logger.info("resume | session=%s thread=%s", session_id, thread_id)
+        graph = build_supervisor_graph(
+            self._adapter,
+            self._semantic_layer,
+            self._captured_events,
+            self._checkpointer,
+        )
+        config = {"configurable": {"thread_id": thread_id}}
+        hitl_response = {"decisions": decisions}
+        full_response_parts: list[str] = []
+
+        graph_stream = graph.astream_events(
+            Command(resume=hitl_response),
+            config=config,
+            version="v2",
+        )
+
+        async for event in stream_agent_events(
+            graph_stream, "", self._captured_events, full_response_parts
+        ):
+            yield event
 
         yield AgentEvent(type=EventType.DONE)

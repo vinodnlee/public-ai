@@ -91,3 +91,34 @@ def test_chat_init_requires_session_id(client: TestClient) -> None:
         json={"query": "Hello"},
     )
     assert resp.status_code == 422
+
+
+def test_approve_returns_stream_url(client: TestClient) -> None:
+    """POST /api/chat/approve with thread_id, session_id, action returns stream_url."""
+    resp = client.post(
+        "/api/chat/approve",
+        json={
+            "thread_id": "thread-abc",
+            "session_id": "sess-1",
+            "action": "approve",
+        },
+    )
+    assert resp.status_code == 200
+    data = resp.json()
+    assert "stream_url" in data
+    assert "/api/chat/stream/" in data["stream_url"]
+
+
+def test_approve_edit_accepts_edited_sql(client: TestClient) -> None:
+    """POST /api/chat/approve with action=edit and edited_sql returns 200."""
+    resp = client.post(
+        "/api/chat/approve",
+        json={
+            "thread_id": "thread-xyz",
+            "session_id": "sess-2",
+            "action": "edit",
+            "edited_sql": "SELECT 1",
+        },
+    )
+    assert resp.status_code == 200
+    assert "stream_url" in resp.json()
