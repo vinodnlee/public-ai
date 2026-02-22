@@ -12,10 +12,20 @@ from src.db.adapters.base import DatabaseAdapter
 from src.semantic.layer import SemanticLayer
 from src.prompts.supervisor import SUPERVISOR_PROMPT_TEMPLATE
 from src.tools.get_schema_context import get_schema_context_tool
-from src.skills import get_tools_for_target
+from src.skills import get_tools_for_target, load_skills_from_dirs
 from src.skills.registry import SkillTarget
 
 logger = get_logger(__name__)
+
+
+def _format_skills_section(skill_docs: list) -> str:
+    """Format loaded SkillDocs into a markdown section for the system prompt."""
+    if not skill_docs:
+        return ""
+    parts = ["\n## Loaded skills (SKILL.md)\n"]
+    for doc in skill_docs:
+        parts.append(f"\n### {doc.title}\n\n{doc.content}\n")
+    return "".join(parts)
 
 
 def build_supervisor_graph(
@@ -36,11 +46,14 @@ def build_supervisor_graph(
         """Return the full semantic + physical schema context for the database."""
         return await get_schema_context_tool.coroutine(semantic_layer=semantic_layer)
 
+    settings = get_settings()
+    skill_docs = load_skills_from_dirs(settings.skill_dirs)
+    skills_section = _format_skills_section(skill_docs)
     supervisor_prompt = SUPERVISOR_PROMPT_TEMPLATE.format(
         dialect=adapter.dialect,
+        skills_section=skills_section,
     )
 
-    settings = get_settings()
     skill_tools = get_tools_for_target(settings.enabled_skills, SkillTarget.SUPERVISOR)
     tools = [get_schema_context] + skill_tools
 

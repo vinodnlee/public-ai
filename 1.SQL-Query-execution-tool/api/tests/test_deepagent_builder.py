@@ -56,3 +56,30 @@ def test_build_supervisor_graph_includes_enabled_skill_tools(
             call_kw = m_create.call_args[1]
             tools = call_kw["tools"]
             assert len(tools) >= 2, "Should have get_schema_context plus at least one skill tool"
+
+
+@patch("src.agent.deepagent_builder.get_llm")
+def test_build_supervisor_graph_injects_skill_docs_into_prompt(
+    m_llm: MagicMock, mock_deps: tuple
+) -> None:
+    """When skill_dirs are set and loader returns SkillDocs, system_prompt contains their content."""
+    from src.skills.skill_loader import SkillDoc
+
+    m_llm.return_value = MagicMock()
+    adapter, semantic_layer, captured_events, checkpointer = mock_deps
+    fake_doc = SkillDoc(
+        path="/fake/path/SKILL.md",
+        title="Test Skill",
+        content="Use this skill to test prompt injection.",
+    )
+    with patch("src.agent.deepagent_builder.get_settings") as m_get:
+        m_get.return_value.enabled_skills = []
+        m_get.return_value.skill_dirs = ["/some/dir"]
+        with patch("src.agent.deepagent_builder.load_skills_from_dirs", return_value=[fake_doc]):
+            with patch("src.agent.deepagent_builder.create_deep_agent") as m_create:
+                m_create.return_value = MagicMock()
+                build_supervisor_graph(adapter, semantic_layer, captured_events, checkpointer)
+                call_kw = m_create.call_args[1]
+                prompt = call_kw["system_prompt"]
+                assert "Use this skill to test prompt injection" in prompt
+                assert "Test Skill" in prompt

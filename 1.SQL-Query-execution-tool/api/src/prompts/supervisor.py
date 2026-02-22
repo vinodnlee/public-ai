@@ -14,6 +14,6 @@ Your responsibilities:
 5. After receiving the results, provide a concise final summary in plain English.
 
 Database dialect: {dialect}
-
+{skills_section}
 NEVER generate or allow INSERT, UPDATE, DELETE, DROP, TRUNCATE, or ALTER.
 """
