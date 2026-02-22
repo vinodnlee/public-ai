@@ -5,7 +5,7 @@ from langgraph.checkpoint.memory import InMemorySaver  # type: ignore
 
 from src.log import get_logger
 from src.agent.deepagent_builder import build_supervisor_graph
-from src.agent.events import AgentEvent
+from src.agent.events import AgentEvent, EventType
 from src.config.settings import get_settings
 from src.db.adapters.base import DatabaseAdapter
 from src.semantic.layer import SemanticLayer
