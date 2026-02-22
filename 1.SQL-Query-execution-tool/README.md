@@ -108,6 +108,37 @@ curl http://localhost:8000/api/health
 
 ---
 
+## MCP Server
+
+The API can expose an **MCP (Model Context Protocol) server** so external clients (e.g. Claude Desktop, other LLM apps) can run natural-language queries against the connected database via a single tool.
+
+### Enabling and endpoint
+
+- **Config:** Set `MCP_SERVER_ENABLED=true` (default). Optionally set `MCP_MOUNT_PATH=mcp` (default) so the MCP endpoint is at `/mcp`.
+- **Endpoint:** When enabled, the MCP server is mounted at `http://<host>:<port>/mcp` (e.g. `http://localhost:8000/mcp`). Use the same host/port as the main API.
+
+### Tool: `query_database`
+
+| Parameter | Type   | Description |
+|-----------|--------|-------------|
+| `question` | string | Natural language question about the database (e.g. "How many users?", "Top 5 customers by revenue"). |
+
+**Returns:** A single string: the agent’s final answer (and optional result row-count summary). The agent may generate and execute SQL under the hood; the tool returns the textual answer only.
+
+**Example (conceptual):** An MCP client calls `query_database(question="How many orders in 2024?")` and receives a string like `"There were 1,234 orders in 2024."`.
+
+### Connecting as an MCP client
+
+1. Ensure the API is running and `MCP_SERVER_ENABLED` is true.
+2. In your MCP client config, add a server with **URL** `http://localhost:8000/mcp` (or your API base URL + `/mcp`). Exact config format depends on the client (e.g. Claude Desktop uses a JSON config with `url` for HTTP/SSE transport).
+3. No API key is required for the MCP endpoint by default. If you enable `AUTH_ENABLED` for the main API, MCP does not currently use the same JWT; consider running behind a reverse proxy or network policy for production.
+
+### Disabling the MCP server
+
+Set `MCP_SERVER_ENABLED=false` in the API environment so the `/mcp` mount is not registered.
+
+---
+
 ## Environment Variables
 
 | Variable | Description | Default |
@@ -125,6 +156,8 @@ curl http://localhost:8000/api/health
 | `LLM_MODEL` | Model name | `gpt-4o` |
 | `DEEPAGENT_MAX_ITERATIONS` | Max agent loop iterations | `10` |
 | `DEEPAGENT_TIMEOUT_SECONDS` | Agent timeout | `120` |
+| `MCP_SERVER_ENABLED` | Expose app as MCP server at `/mcp` | `true` |
+| `MCP_MOUNT_PATH` | Path segment for MCP (e.g. `mcp` → `/mcp`) | `mcp` |
 
 See `api/.env.example` for the complete list.
 

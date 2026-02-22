@@ -25,6 +25,9 @@ passlib[bcrypt]==1.7.4
 # ── Streaming ────────────────────────────────────────────────────────────────
 sse-starlette==1.8.2
 
+# ── MCP (expose app as MCP server) ───────────────────────────────────────────
+fastmcp>=3.0.0
+
 # ── LangChain + DeepAgent (pinned to avoid resolution-too-deep) ─────────────────────
 deepagents==0.4.1
 langchain>=1.2.10,<2.0.0

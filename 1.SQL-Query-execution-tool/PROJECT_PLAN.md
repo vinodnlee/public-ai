@@ -192,9 +192,9 @@ This section refines and schedules the integration of **Skills** (agent tool reg
 
 | Id | Task | Status | Notes |
 |----|------|--------|-------|
-| D.1 | Add MCP server (e.g. FastMCP) with tool `query_database(question: str) -> str` calling `agent.run()` | ⬜ | TDD: test tool returns non-empty on success. Commit + update plan. |
-| D.2 | Mount MCP server on FastAPI (e.g. `/mcp` or separate port) and add config `MCP_SERVER_*` | ⬜ | TDD: test endpoint or mount. Commit + update plan. |
-| D.3 | Document MCP server usage and auth (e.g. API key) in README or `deploy/README.md` | ⬜ | Commit + update plan. |
+| D.1 | Add MCP server (e.g. FastMCP) with tool `query_database(question: str) -> str` calling `agent.run()` | ✅ | FastMCP + run_agent_and_collect; TDD: test_mcp_server. Commit + update plan. |
+| D.2 | Mount MCP server on FastAPI (e.g. `/mcp` or separate port) and add config `MCP_SERVER_*` | ✅ | mcp_server_enabled, mcp_mount_path; combine_lifespans + mount. Commit + update plan. |
+| D.3 | Document MCP server usage and auth (e.g. API key) in README or `deploy/README.md` | ✅ | README § MCP Server: endpoint, query_database, client connection, env vars. Commit + update plan. |
 
 **Deliverable:** External MCP clients (e.g. Claude Desktop) can call this app to run NL→SQL queries.
 
@@ -404,7 +404,5 @@ After each subtask: git commit, then add one row below with date, task id, and c
 | 2026-02-19 | C.1: skill_loader.py | 6440fa2 |
 | 2026-02-19 | C.2: Inject SKILL.md into prompt | 94a9643 |
 | 2026-02-19 | C.3: MCP client + tool conversion | 7e70f7e |
-| 2026-02-19 | C.4: Wire MCP tools into builder | (pending commit) |
-| | D.1: MCP server + query_database | |
-| | D.2: Mount MCP on FastAPI | |
-| | D.3: MCP server docs | |
+| 2026-02-19 | C.4: Wire MCP tools into builder | dd3c3bd |
+| 2026-02-19 | D.1–D.3: MCP server + mount + docs | 6636d95 |

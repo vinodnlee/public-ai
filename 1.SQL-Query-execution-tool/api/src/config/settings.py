@@ -85,6 +85,10 @@ class Settings(BaseSettings):
     # MCP (Part II: agent calls external MCP tools)
     mcp_servers: Union[str, list[str]] = []
 
+    # MCP server (expose this app as MCP; Part II Phase D)
+    mcp_server_enabled: bool = True
+    mcp_mount_path: str = "mcp"
+
     @field_validator("enabled_skills", mode="before")
     @classmethod
     def parse_enabled_skills(cls, v: object) -> list[str]:
