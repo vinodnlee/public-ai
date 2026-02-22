@@ -42,6 +42,44 @@ export async function initiateChat(
   return res.json()
 }
 
+export type ApproveAction = 'approve' | 'reject' | 'edit'
+
+export interface ApproveResponse {
+  stream_url: string
+}
+
+/**
+ * POST /api/chat/approve — resume after HITL interrupt; returns new stream_url.
+ */
+export async function approveAndResume(
+  sessionId: string,
+  threadId: string,
+  action: ApproveAction,
+  options?: { edited_sql?: string; nl_query?: string }
+): Promise<ApproveResponse> {
+  const headers: Record<string, string> = {
+    'Content-Type': 'application/json',
+    ...getAuthHeaders(),
+  }
+  const body: Record<string, string> = {
+    thread_id: threadId,
+    session_id: sessionId,
+    action,
+  }
+  if (options?.edited_sql) body.edited_sql = options.edited_sql
+  if (options?.nl_query) body.nl_query = options.nl_query
+  const res = await fetch(`${API_BASE}/api/chat/approve`, {
+    method: 'POST',
+    headers,
+    body: JSON.stringify(body),
+  })
+  if (!res.ok) {
+    const text = await res.text()
+    throw new Error(`Approve failed: ${res.status} ${text}`)
+  }
+  return res.json()
+}
+
 /**
  * Open EventSource for stream_url and yield AgentEvents.
  * onEvent receives (event, closeStream) — call closeStream() when done (e.g. on type 'done').

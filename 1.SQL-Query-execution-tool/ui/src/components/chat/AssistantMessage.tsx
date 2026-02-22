@@ -6,11 +6,13 @@ import { Box, Paper, Typography, Chip, Stack } from '@mui/material'
 import CheckCircleOutlineRoundedIcon from '@mui/icons-material/CheckCircleOutlineRounded'
 import ErrorOutlineRoundedIcon from '@mui/icons-material/ErrorOutlineRounded'
 import type { AgentEvent } from '../../types/agent'
-import type { ChatMessage } from '../../hooks/useChat'
+import type { ChatMessage, InterruptPending } from '../../hooks/useChat'
+import type { ApproveAction } from '../../api/chatApi'
 import { ThinkingIndicator } from './ThinkingIndicator'
 import { SqlBlock } from './SqlBlock'
 import { ResultTable } from './ResultTable'
 import { ResultChart } from './ResultChart'
+import { SqlApprovalCard } from './SqlApprovalCard'
 
 const THINKING_PAST: Record<string, string> = {
   'Analyzing your question...': 'Analyzed question',
@@ -31,11 +33,21 @@ function lastResultIdx(events: AgentEvent[]): number {
 
 interface AssistantMessageProps {
   message: ChatMessage
+  /** When set, show SQL approval card (for the last assistant message) */
+  interruptPending?: InterruptPending | null
+  onApproveResume?: (action: ApproveAction, editedSql?: string) => void
+  isResuming?: boolean
 }
 
-export function AssistantMessage({ message }: AssistantMessageProps) {
+export function AssistantMessage({
+  message,
+  interruptPending,
+  onApproveResume,
+  isResuming = false,
+}: AssistantMessageProps) {
   const { content, events = [], isStreaming } = message
   const lastResult = lastResultIdx(events)
+  const showApprovalCard = interruptPending && onApproveResume
 
   return (
     <Paper
@@ -58,6 +70,16 @@ export function AssistantMessage({ message }: AssistantMessageProps) {
             showResult={event.type !== 'result' || i === lastResult}
           />
         ))}
+
+        {showApprovalCard && (
+          <SqlApprovalCard
+            proposedSql={interruptPending.proposed_sql}
+            onApprove={() => onApproveResume!('approve')}
+            onReject={() => onApproveResume!('reject')}
+            onEdit={(editedSql) => onApproveResume!('edit', editedSql)}
+            isLoading={isResuming}
+          />
+        )}
 
         {content && (
           <Typography
@@ -86,7 +108,7 @@ export function AssistantMessage({ message }: AssistantMessageProps) {
           </Typography>
         )}
 
-        {!content && events.length === 0 && isStreaming && <ThinkingIndicator />}
+        {!content && events.length === 0 && isStreaming && !showApprovalCard && <ThinkingIndicator />}
       </Stack>
     </Paper>
   )
@@ -203,6 +225,9 @@ function EventBlock({
           </Typography>
         </Box>
       )
+
+    case 'interrupt':
+      return null
 
     default:
       return null

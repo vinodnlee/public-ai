@@ -36,7 +36,9 @@ function App() {
     messages,
     isLoading,
     error,
+    interruptPending,
     sendMessage,
+    approveResume,
     startNewSession,
     switchToSession,
     clearError,
@@ -149,7 +151,12 @@ function App() {
           bgcolor: 'background.default',
         }}
       >
-        <ChatWindow messages={messages} />
+        <ChatWindow
+          messages={messages}
+          interruptPending={interruptPending}
+          onApproveResume={approveResume}
+          isResuming={isLoading}
+        />
 
         {/* Input bar */}
         <Box
@@ -163,7 +170,7 @@ function App() {
           }}
         >
           <Box sx={{ maxWidth: 860, mx: 'auto' }}>
-            <ChatInput onSend={sendMessage} disabled={isLoading} />
+            <ChatInput onSend={sendMessage} disabled={isLoading || !!interruptPending} />
           </Box>
         </Box>
       </Box>
