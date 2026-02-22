@@ -208,5 +208,3 @@ function EventBlock({
       return null
   }
 }
-  }
-}
