@@ -5,6 +5,15 @@ from pydantic import field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
+def _parse_list_env(v: object) -> list[str]:
+    """Parse env value to list of stripped non-empty strings."""
+    if isinstance(v, list):
+        return v
+    if isinstance(v, str):
+        return [x.strip() for x in v.split(",") if x.strip()]
+    return []
+
+
 class Settings(BaseSettings):
     model_config = SettingsConfigDict(
         env_file=".env",
@@ -65,6 +74,20 @@ class Settings(BaseSettings):
     # DeepAgent
     deepagent_max_iterations: int = 10
     deepagent_timeout_seconds: int = 120
+
+    # Skills (Part II: agent tool registry + SKILL.md loader)
+    enabled_skills: Union[str, list[str]] = []
+    skill_dirs: Union[str, list[str]] = []
+
+    @field_validator("enabled_skills", mode="before")
+    @classmethod
+    def parse_enabled_skills(cls, v: object) -> list[str]:
+        return _parse_list_env(v)
+
+    @field_validator("skill_dirs", mode="before")
+    @classmethod
+    def parse_skill_dirs(cls, v: object) -> list[str]:
+        return _parse_list_env(v)
 
     # JWT Auth
     auth_enabled: bool = False

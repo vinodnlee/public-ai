@@ -4,6 +4,18 @@
 
 ---
 
+## 0. Conventions
+
+- **Language:** All code, docstrings, comments, and documentation (README, design docs, this plan) are in **English**. Dialogue with the user may be in **Chinese**.
+- **Development:** When implementing features or bugfixes, use **test-driven development (TDD)**:
+  - Write a failing test first, then minimal code to pass, then refactor.
+  - No production code without a test that failed first.
+- **Progress:** After **each subtask** (within a phase):
+  1. **Git commit** with a clear message (e.g. `feat(skills): add skill registry and config`).
+  2. **Update this file** — mark the subtask done and add a row to the **Progress Log** (Section 11) with date, task id, and commit hash.
+
+---
+
 ## 1. Executive Summary
 
 ### Goal
@@ -121,6 +133,86 @@ Build a **Chat Application** using **DeepAgent** that allows users to ask natura
 | 4.2 | CSV export | Download button in ResultTable |
 | 4.3 | Schema browser | Sidebar showing tables/columns |
 | 4.4 | Chart UI | Bar/line chart when result has numeric columns |
+
+---
+
+## 3b. Part II: Skill, MCP, and Human-in-the-Loop
+
+This section refines and schedules the integration of **Skills** (agent tool registry + Cursor/Codex SKILL.md), **MCP** (agent calls external MCP tools + expose this app as MCP server), and **Human-in-the-loop** (approve SQL before execution). The structure follows a brainstormed design (context, approaches, consolidated plan). Implementation follows **TDD** (write failing test first, then minimal code, then refactor); after each subtask, **git commit** and **update the Progress Log** (Section 11) and mark the task done in the phase table below.
+
+### Phase A: Skill Registry + Redis Checkpointer
+
+**Goal:** Extensible skill registration for the agent and a persistent checkpointer for later HITL.
+
+| Id | Task | Status | Notes |
+|----|------|--------|-------|
+| A.1 | Add `enabled_skills` and related config to `api/src/config/settings.py` | ✅ | TDD: test settings parsing. Commit + update plan. |
+| A.2 | Create `api/src/skills/` with a skill registry (id, name, description, tools, target) | ⬜ | TDD: test registry register/resolve. Commit + update plan. |
+| A.3 | Implement one built-in skill (e.g. `export_result_csv`) and register it | ⬜ | TDD: test skill tool behavior. Commit + update plan. |
+| A.4 | Wire enabled skills into `deepagent_builder.py` (merge skill tools into supervisor) | ⬜ | TDD: integration test or builder test. Commit + update plan. |
+| A.5 | Add Redis checkpointer (replace or complement InMemorySaver) and config | ⬜ | TDD: test checkpoint save/load. Commit + update plan. |
+
+**Deliverable:** Agent can use configurable extra tools; graph state can persist in Redis.
+
+---
+
+### Phase B: Human-in-the-Loop (Approve SQL Before Execution)
+
+**Goal:** Pause before executing SQL; user approves, rejects, or edits; then resume.
+
+| Id | Task | Status | Notes |
+|----|------|--------|-------|
+| B.1 | Design interrupt point: split “plan SQL” vs “execute SQL” (or wrapper node with `interrupt()`) | ⬜ | Design doc in `docs/plans/`; no code yet. Commit + update plan. |
+| B.2 | Implement graph change (interrupt node / two-step flow) and emit `interrupt` payload in SSE | ⬜ | TDD: test stream yields interrupt event. Commit + update plan. |
+| B.3 | Add `POST /api/chat/approve` (or `/resume`) with `thread_id`, `action`, optional `edited_sql` | ⬜ | TDD: test approve/resume and continuation. Commit + update plan. |
+| B.4 | Frontend: handle `interrupt` event, show SQL approval card, call approve API, resume stream | ⬜ | TDD where applicable (e.g. API client); manual E2E ok. Commit + update plan. |
+
+**Deliverable:** User sees proposed SQL and can approve, reject, or edit before execution.
+
+---
+
+### Phase C: SKILL.md Loader + Agent Calls MCP Tools
+
+**Goal:** Load Cursor/Codex SKILL.md into context; agent can call external MCP tools.
+
+| Id | Task | Status | Notes |
+|----|------|--------|-------|
+| C.1 | Add `api/src/skills/skill_loader.py` — scan dirs for `**/SKILL.md`, parse to (path, title, content) | ⬜ | TDD: test loader with fixture dirs. Commit + update plan. |
+| C.2 | Inject selected SKILL.md content into supervisor system prompt (config: `skill_dirs`, `skills_include`) | ⬜ | TDD: test prompt contains skill text. Commit + update plan. |
+| C.3 | Add `api/src/mcp/` client: connect to MCP server(s), fetch tools, convert to LangChain `BaseTool` | ⬜ | TDD: test tool conversion with mock MCP response. Commit + update plan. |
+| C.4 | Config `MCP_SERVERS`; wire MCP tools into `deepagent_builder.py` alongside skills | ⬜ | TDD: integration or builder test. Commit + update plan. |
+
+**Deliverable:** Agent has skill docs in prompt and can call external MCP tools.
+
+---
+
+### Phase D: Expose App as MCP Server
+
+**Goal:** This app exposes a “natural language → SQL → result” tool via MCP for other clients.
+
+| Id | Task | Status | Notes |
+|----|------|--------|-------|
+| D.1 | Add MCP server (e.g. FastMCP) with tool `query_database(question: str) -> str` calling `agent.run()` | ⬜ | TDD: test tool returns non-empty on success. Commit + update plan. |
+| D.2 | Mount MCP server on FastAPI (e.g. `/mcp` or separate port) and add config `MCP_SERVER_*` | ⬜ | TDD: test endpoint or mount. Commit + update plan. |
+| D.3 | Document MCP server usage and auth (e.g. API key) in README or `deploy/README.md` | ⬜ | Commit + update plan. |
+
+**Deliverable:** External MCP clients (e.g. Claude Desktop) can call this app to run NL→SQL queries.
+
+---
+
+### Part II Dependency Overview
+
+```
+Phase A (Skill registry + Redis)
+  A.1 → A.2 → A.3 → A.4
+  A.5 (Redis checkpointer, can parallel with A.1–A.4)
+
+Phase B (HITL) depends on A.5 (Redis checkpointer)
+
+Phase C (SKILL.md + MCP client) can start after A.2; C.4 may follow A.4
+
+Phase D (MCP server) depends only on existing agent.run()
+```
 
 ---
 
@@ -269,13 +361,15 @@ docker compose up --build
 
 ## 10. Next Steps
 
-1. **Start Phase 1** — Create `ui/` folder and scaffold React app (Task 1.1).
-2. **Verify API** — Ensure `curl http://localhost:8000/api/health` returns `{"api":"ok","postgres":"ok","redis":"ok"}` before starting UI.
-3. **Use this plan** — Mark tasks complete as you go; refer to PROMPT.md for detailed specs.
+1. **Part I** — Phases 1–4 are complete (see Progress Log).
+2. **Part II** — Start with **Phase A** (Section 3b): A.1 settings → A.2 skill registry → A.3 one built-in skill → A.4 wire into builder → A.5 Redis checkpointer. Use **TDD** for each subtask; after each, **git commit** and **update the Progress Log** (Section 11) and the Phase A table (mark task Done).
+3. **Use this plan** — Refer to PROMPT.md for detailed specs; for Part II, follow the subtask tables and dependency overview in Section 3b.
 
 ---
 
 ## 11. Progress Log
+
+### Part I (Phases 1–4)
 
 | Date | Task | Commit |
 |------|------|--------|
@@ -291,3 +385,26 @@ docker compose up --build
 | 2025-02-19 | 4.3: Schema browser sidebar | 516e2bb |
 | 2025-02-19 | 4.4: Chart UI (bar/line for numeric columns) | 43b368c |
 | 2025-02-19 | 4.1: JWT authentication (API + UI login) | 5e3a770 |
+
+### Part II (Skill, MCP, HITL)
+
+After each subtask: git commit, then add one row below with date, task id, and commit hash. Mark the task **Done** in the Phase table (Section 3b).
+
+| Date | Task | Commit |
+|------|------|--------|
+| 2026-02-19 | A.1: Settings for skills | (pending commit) |
+| | A.2: Skill registry | |
+| | A.3: Built-in skill (e.g. export_result_csv) | |
+| | A.4: Wire skills into builder | |
+| | A.5: Redis checkpointer | |
+| | B.1: HITL design doc | |
+| | B.2: Interrupt in graph + SSE | |
+| | B.3: POST /api/chat/approve | |
+| | B.4: Frontend approval UI | |
+| | C.1: skill_loader.py | |
+| | C.2: Inject SKILL.md into prompt | |
+| | C.3: MCP client + tool conversion | |
+| | C.4: Wire MCP tools into builder | |
+| | D.1: MCP server + query_database | |
+| | D.2: Mount MCP on FastAPI | |
+| | D.3: MCP server docs | |
