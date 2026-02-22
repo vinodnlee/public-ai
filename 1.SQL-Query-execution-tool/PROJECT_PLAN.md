@@ -177,10 +177,10 @@ This section refines and schedules the integration of **Skills** (agent tool reg
 
 | Id | Task | Status | Notes |
 |----|------|--------|-------|
-| C.1 | Add `api/src/skills/skill_loader.py` — scan dirs for `**/SKILL.md`, parse to (path, title, content) | ⬜ | TDD: test loader with fixture dirs. Commit + update plan. |
-| C.2 | Inject selected SKILL.md content into supervisor system prompt (config: `skill_dirs`, `skills_include`) | ⬜ | TDD: test prompt contains skill text. Commit + update plan. |
-| C.3 | Add `api/src/mcp/` client: connect to MCP server(s), fetch tools, convert to LangChain `BaseTool` | ⬜ | TDD: test tool conversion with mock MCP response. Commit + update plan. |
-| C.4 | Config `MCP_SERVERS`; wire MCP tools into `deepagent_builder.py` alongside skills | ⬜ | TDD: integration or builder test. Commit + update plan. |
+| C.1 | Add `api/src/skills/skill_loader.py` — scan dirs for `**/SKILL.md`, parse to (path, title, content) | ✅ | SkillDoc, load_skills_from_dirs. TDD: test_skill_loader. Commit + update plan. |
+| C.2 | Inject selected SKILL.md content into supervisor system prompt (config: `skill_dirs`, `skills_include`) | ✅ | _format_skills_section; builder loads skill_dirs, injects. TDD: test_deepagent_builder. Commit + update plan. |
+| C.3 | Add `api/src/mcp/` client: connect to MCP server(s), fetch tools, convert to LangChain `BaseTool` | ✅ | mcp_tools_to_langchain; TDD: test_mcp_tools. Commit + update plan. |
+| C.4 | Config `MCP_SERVERS`; wire MCP tools into `deepagent_builder.py` alongside skills | ✅ | mcp_servers in settings; get_mcp_tools_for_supervisor; builder merge. TDD: test_deepagent_builder + test_config. Commit + update plan. |
 
 **Deliverable:** Agent has skill docs in prompt and can call external MCP tools.
 
@@ -400,11 +400,11 @@ After each subtask: git commit, then add one row below with date, task id, and c
 | 2026-02-19 | B.1: HITL design doc | 16e9f2b |
 | 2026-02-19 | B.2: Interrupt in graph + SSE | d6e00ec |
 | 2026-02-19 | B.3: POST /api/chat/approve | 66f3c98 |
-| 2026-02-19 | B.4: Frontend approval UI | (pending commit) |
-| | C.1: skill_loader.py | |
-| | C.2: Inject SKILL.md into prompt | |
-| | C.3: MCP client + tool conversion | |
-| | C.4: Wire MCP tools into builder | |
+| 2026-02-19 | B.4: Frontend approval UI | 4687387 |
+| 2026-02-19 | C.1: skill_loader.py | 6440fa2 |
+| 2026-02-19 | C.2: Inject SKILL.md into prompt | 94a9643 |
+| 2026-02-19 | C.3: MCP client + tool conversion | 7e70f7e |
+| 2026-02-19 | C.4: Wire MCP tools into builder | (pending commit) |
 | | D.1: MCP server + query_database | |
 | | D.2: Mount MCP on FastAPI | |
 | | D.3: MCP server docs | |
