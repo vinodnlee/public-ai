@@ -164,8 +164,8 @@ This section refines and schedules the integration of **Skills** (agent tool reg
 |----|------|--------|-------|
 | B.1 | Design interrupt point: split “plan SQL” vs “execute SQL” (or wrapper node with `interrupt()`) | ✅ | Design doc in `docs/plans/HITL_DESIGN.md`. Commit + update plan. |
 | B.2 | Implement graph change (interrupt node / two-step flow) and emit `interrupt` payload in SSE | ✅ | HITL on sql-executor; INTERRUPT event in stream. TDD: test_streaming. Commit + update plan. |
-| B.3 | Add `POST /api/chat/approve` (or `/resume`) with `thread_id`, `action`, optional `edited_sql` | ⬜ | TDD: test approve/resume and continuation. Commit + update plan. |
-| B.4 | Frontend: handle `interrupt` event, show SQL approval card, call approve API, resume stream | ⬜ | TDD where applicable (e.g. API client); manual E2E ok. Commit + update plan. |
+| B.3 | Add `POST /api/chat/approve` (or `/resume`) with `thread_id`, `action`, optional `edited_sql` | ✅ | ApproveRequest schema; POST /approve; resume stream via same /stream. TDD: test_routes. Commit + update plan. |
+| B.4 | Frontend: handle `interrupt` event, show SQL approval card, call approve API, resume stream | ✅ | SqlApprovalCard; useChat interruptPending/approveResume; ChatWindow/App wiring. Commit + update plan. |
 
 **Deliverable:** User sees proposed SQL and can approve, reject, or edit before execution.
 
@@ -398,9 +398,9 @@ After each subtask: git commit, then add one row below with date, task id, and c
 | 2026-02-19 | A.4: Wire skills into builder | 8fd21e5 |
 | 2026-02-19 | A.5: Redis checkpointer | 18c519b |
 | 2026-02-19 | B.1: HITL design doc | 16e9f2b |
-| 2026-02-19 | B.2: Interrupt in graph + SSE | (pending commit) |
-| | B.3: POST /api/chat/approve | |
-| | B.4: Frontend approval UI | |
+| 2026-02-19 | B.2: Interrupt in graph + SSE | d6e00ec |
+| 2026-02-19 | B.3: POST /api/chat/approve | 66f3c98 |
+| 2026-02-19 | B.4: Frontend approval UI | (pending commit) |
 | | C.1: skill_loader.py | |
 | | C.2: Inject SKILL.md into prompt | |
 | | C.3: MCP client + tool conversion | |
