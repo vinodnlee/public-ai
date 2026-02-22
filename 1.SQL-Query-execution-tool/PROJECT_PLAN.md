@@ -149,7 +149,7 @@ This section refines and schedules the integration of **Skills** (agent tool reg
 | A.1 | Add `enabled_skills` and related config to `api/src/config/settings.py` | ✅ | TDD: test settings parsing. Commit + update plan. |
 | A.2 | Create `api/src/skills/` with a skill registry (id, name, description, tools, target) | ✅ | TDD: test registry register/resolve. Commit + update plan. |
 | A.3 | Implement one built-in skill (e.g. `export_result_csv`) and register it | ✅ | TDD: test skill tool behavior. Commit + update plan. |
-| A.4 | Wire enabled skills into `deepagent_builder.py` (merge skill tools into supervisor) | ⬜ | TDD: integration test or builder test. Commit + update plan. |
+| A.4 | Wire enabled skills into `deepagent_builder.py` (merge skill tools into supervisor) | ✅ | TDD: integration test or builder test. Commit + update plan. |
 | A.5 | Add Redis checkpointer (replace or complement InMemorySaver) and config | ⬜ | TDD: test checkpoint save/load. Commit + update plan. |
 
 **Deliverable:** Agent can use configurable extra tools; graph state can persist in Redis.
@@ -394,7 +394,7 @@ After each subtask: git commit, then add one row below with date, task id, and c
 |------|------|--------|
 | 2026-02-19 | A.1: Settings for skills | 3d3bbbe |
 | 2026-02-19 | A.2: Skill registry | 2cc569f |
-| 2026-02-19 | A.3: Built-in skill (e.g. export_result_csv) | (pending commit) |
+| 2026-02-19 | A.3: Built-in skill (e.g. export_result_csv) | 0f7e2ff |
 | | A.4: Wire skills into builder | |
 | | A.5: Redis checkpointer | |
 | | B.1: HITL design doc | |
