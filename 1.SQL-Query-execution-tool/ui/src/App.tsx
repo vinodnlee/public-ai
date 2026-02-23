@@ -17,13 +17,21 @@ import AccountTreeOutlinedIcon from '@mui/icons-material/AccountTreeOutlined'
 import LogoutIcon from '@mui/icons-material/Logout'
 import LoginIcon from '@mui/icons-material/Login'
 import StorageRoundedIcon from '@mui/icons-material/StorageRounded'
+import SettingsSuggestRoundedIcon from '@mui/icons-material/SettingsSuggestRounded'
 import { ChatWindow } from './components/chat/ChatWindow'
 import { ChatInput } from './components/chat/ChatInput'
 import { SchemaSidebar } from './components/chat/SchemaSidebar'
 import { SessionSidebar } from './components/chat/SessionSidebar'
 import { LoginForm } from './components/chat/LoginForm'
+import { AgentConfigDialog } from './components/chat/AgentConfigDialog'
 import { useChat } from './hooks/useChat'
 import { getToken, clearToken } from './api/authApi'
+import {
+  getAgentConfig,
+  updateAgentConfig,
+  type AgentConfig,
+  type AgentConfigUpdateRequest,
+} from './api/agentConfigApi'
 
 const APPBAR_H = 64
 
@@ -48,12 +56,46 @@ function App() {
   const [sessionListOpen, setSessionListOpen] = useState(false)
   const [schemaOpen, setSchemaOpen] = useState(false)
   const [loginOpen, setLoginOpen] = useState(false)
+  const [agentConfigOpen, setAgentConfigOpen] = useState(false)
+  const [agentConfig, setAgentConfig] = useState<AgentConfig | null>(null)
+  const [agentConfigLoading, setAgentConfigLoading] = useState(false)
+  const [agentConfigError, setAgentConfigError] = useState<string | null>(null)
   const token = getToken()
   const showLoginForm = loginOpen || (authRequired && !token)
 
   const handleNewChat = () => {
     startNewSession()
     setSessionListOpen(false)
+  }
+
+  const openAgentConfig = async () => {
+    setAgentConfigOpen(true)
+    setAgentConfigLoading(true)
+    setAgentConfigError(null)
+    try {
+      const cfg = await getAgentConfig()
+      setAgentConfig(cfg)
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : 'Failed to load agent config'
+      setAgentConfigError(msg)
+    } finally {
+      setAgentConfigLoading(false)
+    }
+  }
+
+  const saveAgentConfig = async (payload: AgentConfigUpdateRequest) => {
+    setAgentConfigLoading(true)
+    setAgentConfigError(null)
+    try {
+      const cfg = await updateAgentConfig(payload)
+      setAgentConfig(cfg)
+      setAgentConfigOpen(false)
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : 'Failed to save agent config'
+      setAgentConfigError(msg)
+    } finally {
+      setAgentConfigLoading(false)
+    }
   }
 
   return (
@@ -103,6 +145,12 @@ function App() {
               sx={{ color: schemaOpen ? 'primary.light' : 'inherit' }}
             >
               <AccountTreeOutlinedIcon />
+            </IconButton>
+          </Tooltip>
+
+          <Tooltip title="Agent settings (skills/MCP)">
+            <IconButton color="inherit" onClick={openAgentConfig}>
+              <SettingsSuggestRoundedIcon />
             </IconButton>
           </Tooltip>
 
@@ -183,6 +231,15 @@ function App() {
           errorMessage={authRequired ? 'Session expired. Please log in.' : undefined}
         />
       )}
+
+      <AgentConfigDialog
+        open={agentConfigOpen}
+        config={agentConfig}
+        isSaving={agentConfigLoading}
+        error={agentConfigError}
+        onClose={() => setAgentConfigOpen(false)}
+        onSave={saveAgentConfig}
+      />
 
       {/* ── Error Snackbar ───────────────────────────────────────────── */}
       <Snackbar
