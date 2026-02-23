@@ -5,6 +5,7 @@ MCP client: load tools from configured MCP servers for the supervisor agent.
 from __future__ import annotations
 
 import asyncio
+import json
 from concurrent.futures import ThreadPoolExecutor
 from typing import Any
 
@@ -52,7 +53,55 @@ def _run_coro_sync(coro: Any) -> Any:
         return future.result()
 
 
-def _load_mcp_tools_for_server(server: str) -> list[dict[str, Any]]:
+def _transport_cache_key(transport: Any) -> str:
+    if isinstance(transport, str):
+        return transport
+    try:
+        return json.dumps(transport, sort_keys=True, ensure_ascii=True)
+    except Exception:
+        return str(transport)
+
+
+def _expand_mcp_server_entries(entries: list[Any]) -> list[tuple[str, Any]]:
+    """Expand mcp server entries into (label, transport) tuples.
+
+    Supports:
+    - URL string entries
+    - Single transport JSON object string
+    - Standard config object string: {"mcpServers": {"name": {...}}}
+    """
+    expanded: list[tuple[str, Any]] = []
+    for raw in entries:
+        value: Any = raw
+        if isinstance(raw, str):
+            text = raw.strip()
+            if not text:
+                continue
+            if text.startswith("{"):
+                try:
+                    value = json.loads(text)
+                except Exception:
+                    value = text
+            else:
+                value = text
+
+        if isinstance(value, dict) and isinstance(value.get("mcpServers"), dict):
+            for name, transport in value["mcpServers"].items():
+                if transport is None:
+                    continue
+                expanded.append((str(name), transport))
+            continue
+
+        if isinstance(value, dict):
+            expanded.append(("inline", value))
+            continue
+
+        expanded.append((str(value), value))
+
+    return expanded
+
+
+def _load_mcp_tools_for_server(server: Any) -> list[dict[str, Any]]:
     """List tool schemas from one MCP server; return [] on failure."""
     async def _list_tools() -> list[dict[str, Any]]:
         from fastmcp import Client
@@ -68,7 +117,7 @@ def _load_mcp_tools_for_server(server: str) -> list[dict[str, Any]]:
         return []
 
 
-def _make_call_tool(server: str):
+def _make_call_tool(server: Any):
     """Create async callback used by LangChain StructuredTools."""
     async def _call_tool(name: str, arguments: dict[str, Any]) -> Any:
         from fastmcp import Client
@@ -87,16 +136,18 @@ def get_mcp_tools_for_supervisor(settings: Any) -> list[Any]:
 
     Uses settings.mcp_servers (URLs or stdio specs). Errors are logged and skipped.
     """
-    servers = tuple(getattr(settings, "mcp_servers", None) or [])
-    if not servers:
+    raw_servers = list(getattr(settings, "mcp_servers", None) or [])
+    expanded_servers = _expand_mcp_server_entries(raw_servers)
+    if not expanded_servers:
         return []
 
-    if servers in _MCP_TOOLS_CACHE:
-        return _MCP_TOOLS_CACHE[servers]
+    cache_key = tuple(_transport_cache_key(transport) for _, transport in expanded_servers)
+    if cache_key in _MCP_TOOLS_CACHE:
+        return _MCP_TOOLS_CACHE[cache_key]
 
     all_tools: list[Any] = []
     seen_names: set[str] = set()
-    for server in servers:
+    for label, server in expanded_servers:
         schemas = _load_mcp_tools_for_server(server)
         if not schemas:
             continue
@@ -108,12 +159,12 @@ def get_mcp_tools_for_supervisor(settings: Any) -> list[Any]:
                 logger.warning(
                     "Duplicate MCP tool name '%s' from server '%s'; skipping duplicate.",
                     name,
-                    server,
+                    label,
                 )
                 continue
             seen_names.add(name)
             all_tools.append(tool)
 
-    _MCP_TOOLS_CACHE[servers] = all_tools
-    logger.info("Loaded %d MCP tools from %d servers", len(all_tools), len(servers))
+    _MCP_TOOLS_CACHE[cache_key] = all_tools
+    logger.info("Loaded %d MCP tools from %d servers", len(all_tools), len(expanded_servers))
     return all_tools
