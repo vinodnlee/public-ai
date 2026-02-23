@@ -58,7 +58,8 @@ def test_expand_mcp_server_entries_supports_standard_mcpservers_json() -> None:
     label, transport = expanded[0]
     assert label == "chrome-devtools"
     assert isinstance(transport, dict)
-    assert transport["command"] == "npx"
+    assert "mcpServers" in transport
+    assert transport["mcpServers"]["chrome-devtools"]["command"] == "npx"
 
 
 def test_get_mcp_tools_for_supervisor_accepts_standard_mcpservers_json() -> None:
@@ -86,4 +87,5 @@ def test_get_mcp_tools_for_supervisor_accepts_standard_mcpservers_json() -> None
         assert tools[0].name == "browser_navigate"
         call_transport = m_load.call_args[0][0]
         assert isinstance(call_transport, dict)
-        assert call_transport["command"] == "npx"
+        assert "mcpServers" in call_transport
+        assert call_transport["mcpServers"]["chrome-devtools"]["command"] == "npx"

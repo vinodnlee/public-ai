@@ -89,11 +89,11 @@ def _expand_mcp_server_entries(entries: list[Any]) -> list[tuple[str, Any]]:
             for name, transport in value["mcpServers"].items():
                 if transport is None:
                     continue
-                expanded.append((str(name), transport))
+                expanded.append((str(name), {"mcpServers": {str(name): transport}}))
             continue
 
         if isinstance(value, dict):
-            expanded.append(("inline", value))
+            expanded.append(("inline", {"mcpServers": {"inline": value}}))
             continue
 
         expanded.append((str(value), value))
