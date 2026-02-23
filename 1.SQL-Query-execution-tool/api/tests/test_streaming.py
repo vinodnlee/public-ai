@@ -6,6 +6,7 @@ import asyncio
 from unittest.mock import AsyncMock
 
 import pytest
+from langgraph.types import Interrupt
 
 from src.agent.events import AgentEvent, EventType
 from src.utils.streaming import stream_agent_events
@@ -45,3 +46,89 @@ async def test_stream_yields_interrupt_event_when_stream_contains_interrupt():
     assert len(interrupt_events) == 1
     assert interrupt_events[0].proposed_sql == "SELECT COUNT(*) FROM users"
     assert interrupt_events[0].nl_query == "How many users?"
+
+
+@pytest.mark.asyncio
+async def test_stream_yields_interrupt_when_payload_is_interrupt_tuple():
+    """LangGraph interrupt payload may be a tuple/list of Interrupt objects."""
+    hitl_payload = {
+        "action_requests": [
+            {
+                "name": "execute_sql_query",
+                "args": {"nl_query": "Users by dept", "sql": "SELECT department_id, COUNT(*) FROM users GROUP BY department_id"},
+            }
+        ]
+    }
+
+    async def mock_stream():
+        yield {
+            "event": "on_chain_end",
+            "data": {"output": {"__interrupt__": (Interrupt(value=hitl_payload, id="it-1"),)}},
+        }
+
+    out = [e async for e in stream_agent_events(mock_stream(), "Users by dept", [], [])]
+    interrupt_events = [e for e in out if e.type == EventType.INTERRUPT]
+    assert len(interrupt_events) == 1
+    assert interrupt_events[0].proposed_sql == "SELECT department_id, COUNT(*) FROM users GROUP BY department_id"
+    assert interrupt_events[0].nl_query == "Users by dept"
+
+
+@pytest.mark.asyncio
+async def test_stream_yields_interrupt_when_tool_name_is_wrapped_alias():
+    """Some runtimes may wrap tool names; interrupt parsing should still work."""
+    hitl_payload = {
+        "action_requests": [
+            {
+                "name": "sql_executor.execute_sql_query.v1",
+                "args": {"nl_query": "dept counts", "sql": "SELECT d, COUNT(*) FROM t GROUP BY d"},
+            }
+        ]
+    }
+
+    async def mock_stream():
+        yield {"event": "on_chain_end", "data": {"output": {"__interrupt__": hitl_payload}}}
+
+    out = [e async for e in stream_agent_events(mock_stream(), "dept counts", [], [])]
+    interrupt_events = [e for e in out if e.type == EventType.INTERRUPT]
+    assert len(interrupt_events) == 1
+    assert interrupt_events[0].proposed_sql == "SELECT d, COUNT(*) FROM t GROUP BY d"
+
+
+@pytest.mark.asyncio
+async def test_stream_keeps_unknown_interrupt_payload_instead_of_dropping():
+    """Unknown interrupt payload shape should still yield an INTERRUPT event."""
+    hitl_payload = {"foo": "bar"}
+
+    async def mock_stream():
+        yield {"event": "on_chain_end", "data": {"output": {"__interrupt__": hitl_payload}}}
+
+    out = [e async for e in stream_agent_events(mock_stream(), "q", [], [])]
+    interrupt_events = [e for e in out if e.type == EventType.INTERRUPT]
+    assert len(interrupt_events) == 1
+
+
+@pytest.mark.asyncio
+async def test_stream_finds_interrupt_in_deep_nested_payload():
+    """Interrupt may be nested in chunk/state payloads; parser should still find it."""
+    hitl_payload = {
+        "action_requests": [
+            {"name": "execute_sql_query", "args": {"nl_query": "q", "sql": "SELECT 1"}}
+        ]
+    }
+
+    async def mock_stream():
+        yield {
+            "event": "on_chain_stream",
+            "data": {
+                "chunk": {
+                    "state": {
+                        "__interrupt__": hitl_payload
+                    }
+                }
+            },
+        }
+
+    out = [e async for e in stream_agent_events(mock_stream(), "q", [], [])]
+    interrupt_events = [e for e in out if e.type == EventType.INTERRUPT]
+    assert len(interrupt_events) == 1
+    assert interrupt_events[0].proposed_sql == "SELECT 1"
