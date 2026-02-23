@@ -32,7 +32,10 @@ class DeepAgent:
         logger.info("DeepAgent initialised | dialect=%s", adapter.dialect)
 
     async def run(
-        self, query: str, session_id: str
+        self,
+        query: str,
+        session_id: str,
+        runtime_config: dict[str, list[str]] | None = None,
     ) -> AsyncGenerator[AgentEvent, None]:
         """Run the supervisor pipeline and yield AgentEvents via SSE."""
         if session_id not in self._thread_map:
@@ -48,6 +51,7 @@ class DeepAgent:
             self._semantic_layer,
             self._captured_events,
             self._checkpointer,
+            runtime_config=runtime_config,
         )
 
         messages = await build_chat_messages(session_id, query)
@@ -83,6 +87,7 @@ class DeepAgent:
         thread_id: str,
         session_id: str,
         decisions: list[dict[str, Any]],
+        runtime_config: dict[str, list[str]] | None = None,
     ) -> AsyncGenerator[AgentEvent, None]:
         """Resume the graph after HITL interrupt; yield continuation events."""
         logger.info("resume | session=%s thread=%s", session_id, thread_id)
@@ -125,6 +130,7 @@ class DeepAgent:
                 self._semantic_layer,
                 self._captured_events,
                 self._checkpointer,
+                runtime_config=runtime_config,
             )
             messages = await build_chat_messages(session_id, original_query)
             config = {"configurable": {"thread_id": new_thread_id}}
@@ -156,6 +162,7 @@ class DeepAgent:
             self._semantic_layer,
             self._captured_events,
             self._checkpointer,
+            runtime_config=runtime_config,
         )
         config = {"configurable": {"thread_id": thread_id}}
         hitl_response = {"decisions": decisions}

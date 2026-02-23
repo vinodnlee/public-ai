@@ -36,6 +36,7 @@ def build_supervisor_graph(
     semantic_layer: SemanticLayer,
     captured_events: list[AgentEvent],
     checkpointer: InMemorySaver,
+    runtime_config: dict[str, list[str]] | None = None,
 ):
     """Build and return the compiled supervisor agent graph."""
     model = get_llm()
@@ -50,19 +51,28 @@ def build_supervisor_graph(
         return await get_schema_context_tool.coroutine(semantic_layer=semantic_layer)
 
     settings = get_settings()
-    runtime = get_agent_runtime_config(settings)
-    skill_docs = load_skills_from_dirs(runtime.skill_dirs)
+    if runtime_config is None:
+        base_runtime = get_agent_runtime_config(settings)
+        runtime = {
+            "enabled_skills": list(getattr(base_runtime, "enabled_skills", []) or []),
+            "skill_dirs": list(getattr(base_runtime, "skill_dirs", []) or []),
+            "mcp_servers": list(getattr(base_runtime, "mcp_servers", []) or []),
+        }
+    else:
+        runtime = runtime_config
+
+    skill_docs = load_skills_from_dirs(runtime.get("skill_dirs", []))
     skills_section = _format_skills_section(skill_docs)
     supervisor_prompt = SUPERVISOR_PROMPT_TEMPLATE.format(
         dialect=adapter.dialect,
         skills_section=skills_section,
     )
 
-    skill_tools = get_tools_for_target(runtime.enabled_skills, SkillTarget.SUPERVISOR)
+    skill_tools = get_tools_for_target(runtime.get("enabled_skills", []), SkillTarget.SUPERVISOR)
     runtime_settings = type(
         "RuntimeSettings",
         (),
-        {"mcp_servers": runtime.mcp_servers},
+        {"mcp_servers": runtime.get("mcp_servers", [])},
     )()
     mcp_tools = get_mcp_tools_for_supervisor(runtime_settings)
     tools = [get_schema_context] + skill_tools + mcp_tools
