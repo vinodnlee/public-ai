@@ -15,6 +15,9 @@ from src.mcp.tools import mcp_tools_to_langchain
 logger = get_logger(__name__)
 
 _MCP_TOOLS_CACHE: dict[tuple[str, ...], list[Any]] = {}
+_MCP_CLIENTS: dict[str, Any] = {}
+_MCP_CLIENT_INIT_LOCKS: dict[str, asyncio.Lock] = {}
+_MCP_CLIENT_CALL_LOCKS: dict[str, asyncio.Lock] = {}
 
 
 def _tool_to_schema(tool: Any) -> dict[str, Any]:
@@ -126,13 +129,36 @@ def _normalize_mcp_arguments(name: str, arguments: dict[str, Any] | None) -> dic
     return args
 
 
+def _get_async_lock(lock_store: dict[str, asyncio.Lock], key: str) -> asyncio.Lock:
+    lock = lock_store.get(key)
+    if lock is None:
+        lock = asyncio.Lock()
+        lock_store[key] = lock
+    return lock
+
+
+async def _get_or_create_client(server: Any) -> tuple[Any, str]:
+    """Return a shared FastMCP client for a server transport."""
+    key = _transport_cache_key(server)
+    init_lock = _get_async_lock(_MCP_CLIENT_INIT_LOCKS, key)
+    async with init_lock:
+        client = _MCP_CLIENTS.get(key)
+        if client is None:
+            from fastmcp import Client
+
+            client = Client(server)
+            await client.__aenter__()
+            _MCP_CLIENTS[key] = client
+    return client, key
+
+
 def _make_call_tool(server: Any):
     """Create async callback used by LangChain StructuredTools."""
     async def _call_tool(name: str, arguments: dict[str, Any]) -> Any:
-        from fastmcp import Client
-
         normalized_args = _normalize_mcp_arguments(name, arguments)
-        async with Client(server) as client:
+        client, key = await _get_or_create_client(server)
+        call_lock = _get_async_lock(_MCP_CLIENT_CALL_LOCKS, key)
+        async with call_lock:
             result = await client.call_tool(name, arguments=normalized_args)
             if hasattr(result, "model_dump"):
                 return result.model_dump()
