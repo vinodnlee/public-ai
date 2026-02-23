@@ -1,30 +1,119 @@
 """
 MCP client: load tools from configured MCP servers for the supervisor agent.
-
-When mcp_servers is non-empty, attempts to connect and convert tools to LangChain format.
-Returns an empty list when no servers are configured or on connection/parse errors.
 """
 
+from __future__ import annotations
+
+import asyncio
+from concurrent.futures import ThreadPoolExecutor
 from typing import Any
 
 from src.log import get_logger
+from src.mcp.tools import mcp_tools_to_langchain
 
 logger = get_logger(__name__)
 
+_MCP_TOOLS_CACHE: dict[tuple[str, ...], list[Any]] = {}
+
+
+def _tool_to_schema(tool: Any) -> dict[str, Any]:
+    """Normalize a fastmcp/mcp Tool object to schema dict."""
+    if hasattr(tool, "model_dump"):
+        raw = tool.model_dump()
+    elif isinstance(tool, dict):
+        raw = tool
+    else:
+        raw = {
+            "name": getattr(tool, "name", "unnamed"),
+            "description": getattr(tool, "description", ""),
+            "inputSchema": getattr(tool, "inputSchema", None),
+        }
+
+    return {
+        "name": raw.get("name") or "unnamed",
+        "description": raw.get("description") or "",
+        "inputSchema": raw.get("inputSchema") or raw.get("input_schema") or {},
+    }
+
+
+def _run_coro_sync(coro: Any) -> Any:
+    """Run async code from sync context, even if an event loop is active."""
+    try:
+        asyncio.get_running_loop()
+        in_running_loop = True
+    except RuntimeError:
+        in_running_loop = False
+
+    if not in_running_loop:
+        return asyncio.run(coro)
+
+    with ThreadPoolExecutor(max_workers=1) as pool:
+        future = pool.submit(asyncio.run, coro)
+        return future.result()
+
+
+def _load_mcp_tools_for_server(server: str) -> list[dict[str, Any]]:
+    """List tool schemas from one MCP server; return [] on failure."""
+    async def _list_tools() -> list[dict[str, Any]]:
+        from fastmcp import Client
+
+        async with Client(server) as client:
+            tools = await client.list_tools()
+            return [_tool_to_schema(t) for t in tools]
+
+    try:
+        return _run_coro_sync(_list_tools())
+    except Exception as exc:
+        logger.warning("Failed loading MCP tools from server '%s': %s", server, exc)
+        return []
+
+
+def _make_call_tool(server: str):
+    """Create async callback used by LangChain StructuredTools."""
+    async def _call_tool(name: str, arguments: dict[str, Any]) -> Any:
+        from fastmcp import Client
+
+        async with Client(server) as client:
+            result = await client.call_tool(name, arguments=arguments or {})
+            if hasattr(result, "model_dump"):
+                return result.model_dump()
+            return result
+
+    return _call_tool
+
 
 def get_mcp_tools_for_supervisor(settings: Any) -> list[Any]:
-    """
-    Return a list of LangChain tools from configured MCP servers.
+    """Return LangChain tools from all configured MCP servers.
 
-    Uses settings.mcp_servers (list of server URLs or "stdio:command:args" specs).
-    Returns [] when mcp_servers is empty or when no tools could be loaded.
+    Uses settings.mcp_servers (URLs or stdio specs). Errors are logged and skipped.
     """
-    servers = getattr(settings, "mcp_servers", None) or []
+    servers = tuple(getattr(settings, "mcp_servers", None) or [])
     if not servers:
         return []
 
-    # TODO: connect to each server (e.g. via MCP Python SDK), list_tools, convert
-    # with mcp_tools_to_langchain and a call_tool that invokes the server.
-    # For now we return [] so the builder can merge this list without error.
-    logger.debug("MCP servers configured but client not yet implemented: %s", servers)
-    return []
+    if servers in _MCP_TOOLS_CACHE:
+        return _MCP_TOOLS_CACHE[servers]
+
+    all_tools: list[Any] = []
+    seen_names: set[str] = set()
+    for server in servers:
+        schemas = _load_mcp_tools_for_server(server)
+        if not schemas:
+            continue
+
+        converted = mcp_tools_to_langchain(schemas, _make_call_tool(server))
+        for tool in converted:
+            name = getattr(tool, "name", "")
+            if name and name in seen_names:
+                logger.warning(
+                    "Duplicate MCP tool name '%s' from server '%s'; skipping duplicate.",
+                    name,
+                    server,
+                )
+                continue
+            seen_names.add(name)
+            all_tools.append(tool)
+
+    _MCP_TOOLS_CACHE[servers] = all_tools
+    logger.info("Loaded %d MCP tools from %d servers", len(all_tools), len(servers))
+    return all_tools
