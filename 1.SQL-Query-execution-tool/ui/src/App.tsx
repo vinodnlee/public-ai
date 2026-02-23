@@ -60,8 +60,19 @@ function App() {
   const [agentConfig, setAgentConfig] = useState<AgentConfig | null>(null)
   const [agentConfigLoading, setAgentConfigLoading] = useState(false)
   const [agentConfigError, setAgentConfigError] = useState<string | null>(null)
+  const [sessionSelections, setSessionSelections] = useState<
+    Record<string, { enabled_skills: string[]; skill_dirs: string[]; mcp_servers: string[] }>
+  >({})
   const token = getToken()
   const showLoginForm = loginOpen || (authRequired && !token)
+  const currentSessionSelection = sessionSelections[currentSessionId] ?? null
+  const runtimeSelection = currentSessionSelection
+    ? {
+        selected_skills: currentSessionSelection.enabled_skills,
+        selected_skill_dirs: currentSessionSelection.skill_dirs,
+        selected_mcp_servers: currentSessionSelection.mcp_servers,
+      }
+    : undefined
 
   const handleNewChat = () => {
     startNewSession()
@@ -96,6 +107,18 @@ function App() {
     } finally {
       setAgentConfigLoading(false)
     }
+  }
+
+  const applyAgentConfigToCurrentSession = (payload: {
+    enabled_skills: string[]
+    skill_dirs: string[]
+    mcp_servers: string[]
+  }) => {
+    setSessionSelections((prev) => ({
+      ...prev,
+      [currentSessionId]: payload,
+    }))
+    setAgentConfigOpen(false)
   }
 
   return (
@@ -202,7 +225,9 @@ function App() {
         <ChatWindow
           messages={messages}
           interruptPending={interruptPending}
-          onApproveResume={approveResume}
+          onApproveResume={(action, editedSql) =>
+            approveResume(action, editedSql, runtimeSelection)
+          }
           isResuming={isLoading}
         />
 
@@ -218,7 +243,10 @@ function App() {
           }}
         >
           <Box sx={{ maxWidth: 860, mx: 'auto' }}>
-            <ChatInput onSend={sendMessage} disabled={isLoading || !!interruptPending} />
+            <ChatInput
+              onSend={(query) => sendMessage(query, runtimeSelection)}
+              disabled={isLoading || !!interruptPending}
+            />
           </Box>
         </Box>
       </Box>
@@ -235,10 +263,12 @@ function App() {
       <AgentConfigDialog
         open={agentConfigOpen}
         config={agentConfig}
+        sessionSelection={currentSessionSelection}
         isSaving={agentConfigLoading}
         error={agentConfigError}
         onClose={() => setAgentConfigOpen(false)}
         onSave={saveAgentConfig}
+        onApplyToSession={applyAgentConfigToCurrentSession}
       />
 
       {/* ── Error Snackbar ───────────────────────────────────────────── */}

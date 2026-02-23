@@ -3,7 +3,13 @@
  */
 
 import { useCallback, useEffect, useRef, useState } from 'react'
-import { initiateChat, openEventStream, approveAndResume, type ApproveAction } from '../api/chatApi'
+import {
+  initiateChat,
+  openEventStream,
+  approveAndResume,
+  type ApproveAction,
+  type RuntimeSelection,
+} from '../api/chatApi'
 import { clearToken } from '../api/authApi'
 import type { AgentEvent } from '../types/agent'
 
@@ -42,8 +48,12 @@ export interface UseChatReturn {
   authRequired: boolean
   /** Set when stream emitted type 'interrupt' — show SQL approval card */
   interruptPending: InterruptPending | null
-  sendMessage: (query: string) => Promise<void>
-  approveResume: (action: ApproveAction, editedSql?: string) => Promise<void>
+  sendMessage: (query: string, runtimeSelection?: RuntimeSelection) => Promise<void>
+  approveResume: (
+    action: ApproveAction,
+    editedSql?: string,
+    runtimeSelection?: RuntimeSelection
+  ) => Promise<void>
   startNewSession: () => void
   switchToSession: (sessionId: string) => void
   clearError: () => void
@@ -118,7 +128,7 @@ export function useChat(): UseChatReturn {
   )
 
   const sendMessage = useCallback(
-    async (query: string) => {
+    async (query: string, runtimeSelection?: RuntimeSelection) => {
       const trimmed = query.trim()
       if (!trimmed || isLoading) return
 
@@ -133,7 +143,7 @@ export function useChat(): UseChatReturn {
       ])
 
       try {
-        const { stream_url } = await initiateChat(trimmed, sessionIdRef.current)
+        const { stream_url } = await initiateChat(trimmed, sessionIdRef.current, runtimeSelection)
         const events: AgentEvent[] = []
         let textContent = ''
 
@@ -194,7 +204,7 @@ export function useChat(): UseChatReturn {
   )
 
   const approveResume = useCallback(
-    async (action: ApproveAction, editedSql?: string) => {
+    async (action: ApproveAction, editedSql?: string, runtimeSelection?: RuntimeSelection) => {
       const pending = interruptPending
       if (!pending || isLoading) return
       setError(null)
@@ -209,6 +219,7 @@ export function useChat(): UseChatReturn {
           {
             edited_sql: editedSql,
             nl_query: pending.nl_query || undefined,
+            runtimeSelection,
           }
         )
         const events: AgentEvent[] = []

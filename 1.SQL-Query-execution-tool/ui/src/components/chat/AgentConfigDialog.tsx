@@ -18,10 +18,16 @@ import type { AgentConfig } from '../../api/agentConfigApi'
 interface AgentConfigDialogProps {
   open: boolean
   config: AgentConfig | null
+  sessionSelection?: { enabled_skills: string[]; skill_dirs: string[]; mcp_servers: string[] } | null
   isSaving?: boolean
   error?: string | null
   onClose: () => void
   onSave: (payload: { enabled_skills: string[]; skill_dirs: string[]; mcp_servers: string[] }) => void
+  onApplyToSession?: (payload: {
+    enabled_skills: string[]
+    skill_dirs: string[]
+    mcp_servers: string[]
+  }) => void
 }
 
 function splitLines(text: string): string[] {
@@ -34,21 +40,35 @@ function splitLines(text: string): string[] {
 export function AgentConfigDialog({
   open,
   config,
+  sessionSelection = null,
   isSaving = false,
   error = null,
   onClose,
   onSave,
+  onApplyToSession,
 }: AgentConfigDialogProps) {
   const [enabledSkills, setEnabledSkills] = useState<string[]>([])
   const [skillDirsText, setSkillDirsText] = useState('')
   const [mcpServersText, setMcpServersText] = useState('')
 
   useEffect(() => {
+    if (sessionSelection) {
+      setEnabledSkills(sessionSelection.enabled_skills ?? [])
+      setSkillDirsText((sessionSelection.skill_dirs ?? []).join('\n'))
+      setMcpServersText((sessionSelection.mcp_servers ?? []).join('\n'))
+      return
+    }
     if (!config) return
     setEnabledSkills(config.enabled_skills ?? [])
     setSkillDirsText((config.skill_dirs ?? []).join('\n'))
     setMcpServersText((config.mcp_servers ?? []).join('\n'))
-  }, [config])
+  }, [config, sessionSelection])
+
+  const payload = {
+    enabled_skills: enabledSkills,
+    skill_dirs: splitLines(skillDirsText),
+    mcp_servers: splitLines(mcpServersText),
+  }
 
   const available = useMemo(() => config?.available_skills ?? [], [config])
 
@@ -112,18 +132,17 @@ export function AgentConfigDialog({
         </Stack>
       </DialogContent>
       <DialogActions>
+        {onApplyToSession && (
+          <Button onClick={() => onApplyToSession(payload)} disabled={isSaving}>
+            Apply To Current Chat
+          </Button>
+        )}
         <Button onClick={onClose} disabled={isSaving}>
           Cancel
         </Button>
         <Button
           variant="contained"
-          onClick={() =>
-            onSave({
-              enabled_skills: enabledSkills,
-              skill_dirs: splitLines(skillDirsText),
-              mcp_servers: splitLines(mcpServersText),
-            })
-          }
+          onClick={() => onSave(payload)}
           disabled={isSaving}
         >
           Save
