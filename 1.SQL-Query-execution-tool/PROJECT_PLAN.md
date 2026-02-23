@@ -409,3 +409,4 @@ After each subtask: git commit, then add one row below with date, task id, and c
 | 2026-02-23 | C.3 follow-up: implement runtime MCP server loading in `src/mcp/client.py` | a7e6060 |
 | 2026-02-23 | C.4 follow-up: add runtime agent config API for skills/MCP (`/api/agent-config`) | 24006e4 |
 | 2026-02-23 | C.4 follow-up: add UI settings dialog for Skills/MCP config | fc3484a |
+| 2026-02-23 | LLM follow-up: dynamic model switching middleware via `@wrap_model_call` | pending |

@@ -16,6 +16,7 @@ from src.skills import get_tools_for_target, load_skills_from_dirs
 from src.skills.registry import SkillTarget
 from src.mcp.client import get_mcp_tools_for_supervisor
 from src.config.runtime_overrides import get_agent_runtime_config
+from src.llm.model_switch import build_dynamic_model_switch_middleware
 
 logger = get_logger(__name__)
 
@@ -67,10 +68,15 @@ def build_supervisor_graph(
     tools = [get_schema_context] + skill_tools + mcp_tools
 
     logger.debug("Building supervisor graph with schema tool and %d skill tools", len(skill_tools))
+    middleware = []
+    if getattr(settings, "model_switch_enabled", False):
+        middleware.append(build_dynamic_model_switch_middleware(settings))
+
     return create_deep_agent(
         model=model,
         tools=tools,
         system_prompt=supervisor_prompt,
+        middleware=middleware,
         subagents=[subagent],
         checkpointer=checkpointer,
     )

@@ -69,10 +69,14 @@ class Settings(BaseSettings):
     # LLM
     llm_provider: str = "openai"
     llm_model: str = "gpt-4o"
+    llm_lightweight_model: str = "gpt-4o-mini"
+    llm_advanced_model: str = "gpt-4o"
     llm_api_key: str = ""
     llm_base_url: str = ""
     llm_max_tokens: int = 4096
     llm_temperature: float = 0.0
+    model_switch_enabled: bool = True
+    model_switch_message_threshold: int = 12
 
     # DeepAgent
     deepagent_max_iterations: int = 10
