@@ -117,13 +117,23 @@ def _load_mcp_tools_for_server(server: Any) -> list[dict[str, Any]]:
         return []
 
 
+def _normalize_mcp_arguments(name: str, arguments: dict[str, Any] | None) -> dict[str, Any]:
+    """Normalize tool arguments before dispatching to MCP server."""
+    args = dict(arguments or {})
+    if name == "new_page" and not args.get("url"):
+        # chrome-devtools-mcp requires url for new_page.
+        args["url"] = "about:blank"
+    return args
+
+
 def _make_call_tool(server: Any):
     """Create async callback used by LangChain StructuredTools."""
     async def _call_tool(name: str, arguments: dict[str, Any]) -> Any:
         from fastmcp import Client
 
+        normalized_args = _normalize_mcp_arguments(name, arguments)
         async with Client(server) as client:
-            result = await client.call_tool(name, arguments=arguments or {})
+            result = await client.call_tool(name, arguments=normalized_args)
             if hasattr(result, "model_dump"):
                 return result.model_dump()
             return result

@@ -6,7 +6,11 @@ import json
 from types import SimpleNamespace
 from unittest.mock import patch
 
-from src.mcp.client import get_mcp_tools_for_supervisor, _expand_mcp_server_entries
+from src.mcp.client import (
+    get_mcp_tools_for_supervisor,
+    _expand_mcp_server_entries,
+    _normalize_mcp_arguments,
+)
 
 
 def test_get_mcp_tools_for_supervisor_empty_servers_returns_empty() -> None:
@@ -89,3 +93,9 @@ def test_get_mcp_tools_for_supervisor_accepts_standard_mcpservers_json() -> None
         assert isinstance(call_transport, dict)
         assert "mcpServers" in call_transport
         assert call_transport["mcpServers"]["chrome-devtools"]["command"] == "npx"
+
+
+def test_normalize_mcp_arguments_sets_default_url_for_new_page() -> None:
+    assert _normalize_mcp_arguments("new_page", {})["url"] == "about:blank"
+    assert _normalize_mcp_arguments("new_page", {"url": "https://example.com"})["url"] == "https://example.com"
+    assert _normalize_mcp_arguments("goto", {}) == {}
