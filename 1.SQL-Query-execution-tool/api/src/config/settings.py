@@ -77,6 +77,7 @@ class Settings(BaseSettings):
     # DeepAgent
     deepagent_max_iterations: int = 10
     deepagent_timeout_seconds: int = 120
+    hitl_max_replans: int = 3
 
     # Skills (Part II: agent tool registry + SKILL.md loader)
     enabled_skills: Union[str, list[str]] = []

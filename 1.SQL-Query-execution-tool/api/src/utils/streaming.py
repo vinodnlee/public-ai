@@ -161,6 +161,7 @@ async def stream_agent_events(
     """
     token_buffer: list[str] = []
     plan_emitted = False
+    saw_interrupt = False
 
     async for lc_event in graph_stream:
         kind: str = lc_event.get("event", "")
@@ -174,6 +175,9 @@ async def stream_agent_events(
             interrupt_evt = _interrupt_to_agent_event(hitl)
             if interrupt_evt is not None:
                 yield interrupt_evt
+            # After an interrupt, discard buffered tokens and suppress final ANSWER.
+            saw_interrupt = True
+            token_buffer.clear()
             continue
 
         if kind == "on_chat_model_stream":
@@ -215,7 +219,7 @@ async def stream_agent_events(
             )
 
     # Flush remaining tokens as the final ANSWER
-    if token_buffer:
+    if token_buffer and not saw_interrupt:
         answer_text = "".join(token_buffer).strip()
         if answer_text:
             yield AgentEvent(type=EventType.ANSWER, content=answer_text)

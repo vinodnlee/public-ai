@@ -158,7 +158,6 @@ export function useChat(): UseChatReturn {
               closeStream()
               eventSourceRef.current = null
               setIsLoading(false)
-              setInterruptPending(null)
             }
             updateCurrentSessionMessages((prev) => {
               const next = [...prev]
@@ -222,6 +221,16 @@ export function useChat(): UseChatReturn {
             if (event.type === 'answer' && event.content) {
               textContent = event.content
             }
+            if (event.type === 'interrupt' && event.thread_id && event.proposed_sql !== undefined) {
+              closeStream()
+              eventSourceRef.current = null
+              setIsLoading(false)
+              setInterruptPending({
+                proposed_sql: event.proposed_sql ?? '',
+                nl_query: event.nl_query ?? '',
+                thread_id: event.thread_id,
+              })
+            }
             if (event.type === 'done') {
               closeStream()
               eventSourceRef.current = null
@@ -235,7 +244,7 @@ export function useChat(): UseChatReturn {
                   ...last,
                   content: textContent,
                   events: [...(last.events ?? []), ...events],
-                  isStreaming: event.type !== 'done',
+                  isStreaming: event.type !== 'done' && event.type !== 'interrupt',
                 }
               }
               return next
