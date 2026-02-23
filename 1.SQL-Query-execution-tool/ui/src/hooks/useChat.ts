@@ -3,7 +3,13 @@
  */
 
 import { useCallback, useEffect, useRef, useState } from 'react'
-import { initiateChat, openEventStream } from '../api/chatApi'
+import {
+  initiateChat,
+  openEventStream,
+  approveAndResume,
+  type ApproveAction,
+  type RuntimeSelection,
+} from '../api/chatApi'
 import { clearToken } from '../api/authApi'
 import type { AgentEvent } from '../types/agent'
 
@@ -20,6 +26,12 @@ export interface ChatSession {
   messages: ChatMessage[]
 }
 
+export interface InterruptPending {
+  proposed_sql: string
+  nl_query: string
+  thread_id: string
+}
+
 function sessionTitle(messages: ChatMessage[]): string {
   const firstUser = messages.find((m) => m.role === 'user')
   if (!firstUser?.content?.trim()) return 'New chat'
@@ -34,7 +46,14 @@ export interface UseChatReturn {
   isLoading: boolean
   error: string | null
   authRequired: boolean
-  sendMessage: (query: string) => Promise<void>
+  /** Set when stream emitted type 'interrupt' — show SQL approval card */
+  interruptPending: InterruptPending | null
+  sendMessage: (query: string, runtimeSelection?: RuntimeSelection) => Promise<void>
+  approveResume: (
+    action: ApproveAction,
+    editedSql?: string,
+    runtimeSelection?: RuntimeSelection
+  ) => Promise<void>
   startNewSession: () => void
   switchToSession: (sessionId: string) => void
   clearError: () => void
@@ -56,6 +75,7 @@ export function useChat(): UseChatReturn {
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [authRequired, setAuthRequired] = useState(false)
+  const [interruptPending, setInterruptPending] = useState<InterruptPending | null>(null)
   const sessionIdRef = useRef<string>(currentSessionId)
   const eventSourceRef = useRef<EventSource | null>(null)
 
@@ -77,6 +97,7 @@ export function useChat(): UseChatReturn {
     }
     setError(null)
     setIsLoading(false)
+    setInterruptPending(null)
     const newId = generateSessionId()
     setSessions((prev) => [...prev, { id: newId, title: 'New chat', messages: [] }])
     setCurrentSessionId(newId)
@@ -89,6 +110,7 @@ export function useChat(): UseChatReturn {
     }
     setError(null)
     setIsLoading(false)
+    setInterruptPending(null)
     setCurrentSessionId(sessionId)
   }, [])
 
@@ -106,7 +128,7 @@ export function useChat(): UseChatReturn {
   )
 
   const sendMessage = useCallback(
-    async (query: string) => {
+    async (query: string, runtimeSelection?: RuntimeSelection) => {
       const trimmed = query.trim()
       if (!trimmed || isLoading) return
 
@@ -121,7 +143,7 @@ export function useChat(): UseChatReturn {
       ])
 
       try {
-        const { stream_url } = await initiateChat(trimmed, sessionIdRef.current)
+        const { stream_url } = await initiateChat(trimmed, sessionIdRef.current, runtimeSelection)
         const events: AgentEvent[] = []
         let textContent = ''
 
@@ -131,6 +153,16 @@ export function useChat(): UseChatReturn {
             events.push(event)
             if (event.type === 'answer' && event.content) {
               textContent = event.content
+            }
+            if (event.type === 'interrupt' && event.thread_id && event.proposed_sql !== undefined) {
+              closeStream()
+              eventSourceRef.current = null
+              setIsLoading(false)
+              setInterruptPending({
+                proposed_sql: event.proposed_sql ?? '',
+                nl_query: event.nl_query ?? '',
+                thread_id: event.thread_id,
+              })
             }
             if (event.type === 'done') {
               closeStream()
@@ -145,7 +177,7 @@ export function useChat(): UseChatReturn {
                   ...last,
                   content: textContent,
                   events: [...events],
-                  isStreaming: event.type !== 'done',
+                  isStreaming: event.type !== 'done' && event.type !== 'interrupt',
                 }
               }
               return next
@@ -171,6 +203,84 @@ export function useChat(): UseChatReturn {
     [isLoading, updateCurrentSessionMessages]
   )
 
+  const approveResume = useCallback(
+    async (action: ApproveAction, editedSql?: string, runtimeSelection?: RuntimeSelection) => {
+      const pending = interruptPending
+      if (!pending || isLoading) return
+      setError(null)
+      setInterruptPending(null)
+      setIsLoading(true)
+
+      try {
+        const { stream_url } = await approveAndResume(
+          sessionIdRef.current,
+          pending.thread_id,
+          action,
+          {
+            edited_sql: editedSql,
+            nl_query: pending.nl_query || undefined,
+            runtimeSelection,
+          }
+        )
+        const events: AgentEvent[] = []
+        let textContent = ''
+
+        const es = openEventStream(
+          stream_url,
+          (event, closeStream) => {
+            events.push(event)
+            if (event.type === 'answer' && event.content) {
+              textContent = event.content
+            }
+            if (event.type === 'interrupt' && event.thread_id && event.proposed_sql !== undefined) {
+              closeStream()
+              eventSourceRef.current = null
+              setIsLoading(false)
+              setInterruptPending({
+                proposed_sql: event.proposed_sql ?? '',
+                nl_query: event.nl_query ?? '',
+                thread_id: event.thread_id,
+              })
+            }
+            if (event.type === 'done') {
+              closeStream()
+              eventSourceRef.current = null
+              setIsLoading(false)
+            }
+            updateCurrentSessionMessages((prev) => {
+              const next = [...prev]
+              const last = next[next.length - 1]
+              if (last?.role === 'assistant') {
+                next[next.length - 1] = {
+                  ...last,
+                  content: textContent,
+                  events: [...(last.events ?? []), ...events],
+                  isStreaming: event.type !== 'done' && event.type !== 'interrupt',
+                }
+              }
+              return next
+            })
+          },
+          () => {
+            eventSourceRef.current = null
+            setIsLoading(false)
+          }
+        )
+        eventSourceRef.current = es
+      } catch (err) {
+        const msg = err instanceof Error ? err.message : 'Approve failed'
+        if (msg.includes('401') || msg.includes('Unauthorized')) {
+          clearToken()
+          setAuthRequired(true)
+        }
+        setError(msg)
+        setIsLoading(false)
+        setInterruptPending(pending)
+      }
+    },
+    [interruptPending, isLoading, updateCurrentSessionMessages]
+  )
+
   return {
     sessions,
     currentSessionId,
@@ -178,7 +288,9 @@ export function useChat(): UseChatReturn {
     isLoading,
     error,
     authRequired,
+    interruptPending,
     sendMessage,
+    approveResume,
     startNewSession,
     switchToSession,
     clearError,

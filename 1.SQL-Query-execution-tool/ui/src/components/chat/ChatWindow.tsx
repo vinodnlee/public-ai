@@ -5,14 +5,23 @@
 import { useEffect, useRef } from 'react'
 import { Box, Typography, Stack } from '@mui/material'
 import QuestionAnswerOutlinedIcon from '@mui/icons-material/QuestionAnswerOutlined'
-import type { ChatMessage } from '../../hooks/useChat'
+import type { ChatMessage, InterruptPending } from '../../hooks/useChat'
+import type { ApproveAction } from '../../api/chatApi'
 import { AssistantMessage } from './AssistantMessage'
 
 interface ChatWindowProps {
   messages: ChatMessage[]
+  interruptPending?: InterruptPending | null
+  onApproveResume?: (action: ApproveAction, editedSql?: string) => void
+  isResuming?: boolean
 }
 
-export function ChatWindow({ messages }: ChatWindowProps) {
+export function ChatWindow({
+  messages,
+  interruptPending,
+  onApproveResume,
+  isResuming = false,
+}: ChatWindowProps) {
   const bottomRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
@@ -68,7 +77,12 @@ export function ChatWindow({ messages }: ChatWindowProps) {
                 </Box>
               ) : (
                 <Box sx={{ maxWidth: '85%', width: '100%' }}>
-                  <AssistantMessage message={msg} />
+                  <AssistantMessage
+                    message={msg}
+                    interruptPending={i === messages.length - 1 ? interruptPending : undefined}
+                    onApproveResume={i === messages.length - 1 ? onApproveResume : undefined}
+                    isResuming={i === messages.length - 1 ? isResuming : false}
+                  />
                 </Box>
               )}
             </Box>

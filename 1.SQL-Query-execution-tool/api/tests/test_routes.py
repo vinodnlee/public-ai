@@ -91,3 +91,60 @@ def test_chat_init_requires_session_id(client: TestClient) -> None:
         json={"query": "Hello"},
     )
     assert resp.status_code == 422
+
+
+def test_approve_returns_stream_url(client: TestClient) -> None:
+    """POST /api/chat/approve with thread_id, session_id, action returns stream_url."""
+    resp = client.post(
+        "/api/chat/approve",
+        json={
+            "thread_id": "thread-abc",
+            "session_id": "sess-1",
+            "action": "approve",
+        },
+    )
+    assert resp.status_code == 200
+    data = resp.json()
+    assert "stream_url" in data
+    assert "/api/chat/stream/" in data["stream_url"]
+
+
+def test_approve_edit_accepts_edited_sql(client: TestClient) -> None:
+    """POST /api/chat/approve with action=edit and edited_sql returns 200."""
+    resp = client.post(
+        "/api/chat/approve",
+        json={
+            "thread_id": "thread-xyz",
+            "session_id": "sess-2",
+            "action": "edit",
+            "edited_sql": "SELECT 1",
+        },
+    )
+    assert resp.status_code == 200
+    assert "stream_url" in resp.json()
+
+
+def test_agent_config_get_returns_expected_shape(client: TestClient) -> None:
+    resp = client.get("/api/agent-config")
+    assert resp.status_code == 200
+    data = resp.json()
+    assert "enabled_skills" in data
+    assert "skill_dirs" in data
+    assert "mcp_servers" in data
+    assert "available_skills" in data
+
+
+def test_agent_config_put_updates_runtime_values(client: TestClient) -> None:
+    resp = client.put(
+        "/api/agent-config",
+        json={
+            "enabled_skills": ["export_csv"],
+            "skill_dirs": ["C:/skills"],
+            "mcp_servers": ["http://localhost:9123/mcp"],
+        },
+    )
+    assert resp.status_code == 200
+    data = resp.json()
+    assert data["enabled_skills"] == ["export_csv"]
+    assert data["skill_dirs"] == ["C:/skills"]
+    assert data["mcp_servers"] == ["http://localhost:9123/mcp"]

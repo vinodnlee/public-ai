@@ -1,0 +1,19 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --bg: #0f1114;
+  --surface: #1a1d21;
+  --surface-hover: #23262c;
+  --border: #2d3239;
+  --text: #eef0f3;
+  --text-muted: #94a3b8;
+  --accent-done: #22c55e;
+  --accent-partial: #f59e0b;
+  --accent-todo: #64748b;
+}
+
+body {
+  @apply font-sans antialiased text-[var(--text)] bg-[var(--bg)];
+}

@@ -13,6 +13,7 @@ export type EventType =
   | 'answer'
   | 'error'
   | 'done'
+  | 'interrupt'
 
 export interface AgentEvent {
   type: EventType
@@ -22,6 +23,10 @@ export interface AgentEvent {
   columns?: string[]
   rows?: Record<string, unknown>[]
   row_count?: number
+  /** HITL: set when type is 'interrupt' */
+  proposed_sql?: string
+  nl_query?: string
+  thread_id?: string
 }
 
 export type MessageRole = 'user' | 'assistant'

@@ -101,6 +101,7 @@ You should see:
 
 - **API docs**: http://localhost:8000/docs  
 - **Health check**: http://localhost:8000/api/health  
+- **MCP server** (if enabled): http://localhost:8000/mcp — see [MCP Server](../../README.md#mcp-server) in the main README.
 
 ---
 

@@ -17,13 +17,21 @@ import AccountTreeOutlinedIcon from '@mui/icons-material/AccountTreeOutlined'
 import LogoutIcon from '@mui/icons-material/Logout'
 import LoginIcon from '@mui/icons-material/Login'
 import StorageRoundedIcon from '@mui/icons-material/StorageRounded'
+import SettingsSuggestRoundedIcon from '@mui/icons-material/SettingsSuggestRounded'
 import { ChatWindow } from './components/chat/ChatWindow'
 import { ChatInput } from './components/chat/ChatInput'
 import { SchemaSidebar } from './components/chat/SchemaSidebar'
 import { SessionSidebar } from './components/chat/SessionSidebar'
 import { LoginForm } from './components/chat/LoginForm'
+import { AgentConfigDialog } from './components/chat/AgentConfigDialog'
 import { useChat } from './hooks/useChat'
 import { getToken, clearToken } from './api/authApi'
+import {
+  getAgentConfig,
+  updateAgentConfig,
+  type AgentConfig,
+  type AgentConfigUpdateRequest,
+} from './api/agentConfigApi'
 
 const APPBAR_H = 64
 
@@ -36,7 +44,9 @@ function App() {
     messages,
     isLoading,
     error,
+    interruptPending,
     sendMessage,
+    approveResume,
     startNewSession,
     switchToSession,
     clearError,
@@ -46,12 +56,69 @@ function App() {
   const [sessionListOpen, setSessionListOpen] = useState(false)
   const [schemaOpen, setSchemaOpen] = useState(false)
   const [loginOpen, setLoginOpen] = useState(false)
+  const [agentConfigOpen, setAgentConfigOpen] = useState(false)
+  const [agentConfig, setAgentConfig] = useState<AgentConfig | null>(null)
+  const [agentConfigLoading, setAgentConfigLoading] = useState(false)
+  const [agentConfigError, setAgentConfigError] = useState<string | null>(null)
+  const [sessionSelections, setSessionSelections] = useState<
+    Record<string, { enabled_skills: string[]; skill_dirs: string[]; mcp_servers: string[] }>
+  >({})
   const token = getToken()
   const showLoginForm = loginOpen || (authRequired && !token)
+  const currentSessionSelection = sessionSelections[currentSessionId] ?? null
+  const runtimeSelection = currentSessionSelection
+    ? {
+        selected_skills: currentSessionSelection.enabled_skills,
+        selected_skill_dirs: currentSessionSelection.skill_dirs,
+        selected_mcp_servers: currentSessionSelection.mcp_servers,
+      }
+    : undefined
 
   const handleNewChat = () => {
     startNewSession()
     setSessionListOpen(false)
+  }
+
+  const openAgentConfig = async () => {
+    setAgentConfigOpen(true)
+    setAgentConfigLoading(true)
+    setAgentConfigError(null)
+    try {
+      const cfg = await getAgentConfig()
+      setAgentConfig(cfg)
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : 'Failed to load agent config'
+      setAgentConfigError(msg)
+    } finally {
+      setAgentConfigLoading(false)
+    }
+  }
+
+  const saveAgentConfig = async (payload: AgentConfigUpdateRequest) => {
+    setAgentConfigLoading(true)
+    setAgentConfigError(null)
+    try {
+      const cfg = await updateAgentConfig(payload)
+      setAgentConfig(cfg)
+      setAgentConfigOpen(false)
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : 'Failed to save agent config'
+      setAgentConfigError(msg)
+    } finally {
+      setAgentConfigLoading(false)
+    }
+  }
+
+  const applyAgentConfigToCurrentSession = (payload: {
+    enabled_skills: string[]
+    skill_dirs: string[]
+    mcp_servers: string[]
+  }) => {
+    setSessionSelections((prev) => ({
+      ...prev,
+      [currentSessionId]: payload,
+    }))
+    setAgentConfigOpen(false)
   }
 
   return (
@@ -104,6 +171,12 @@ function App() {
             </IconButton>
           </Tooltip>
 
+          <Tooltip title="Agent settings (skills/MCP)">
+            <IconButton color="inherit" onClick={openAgentConfig}>
+              <SettingsSuggestRoundedIcon />
+            </IconButton>
+          </Tooltip>
+
           {token && token !== 'disabled' ? (
             <Tooltip title="Log out">
               <IconButton color="inherit" onClick={() => { clearToken(); setLoginOpen(false) }}>
@@ -149,7 +222,14 @@ function App() {
           bgcolor: 'background.default',
         }}
       >
-        <ChatWindow messages={messages} />
+        <ChatWindow
+          messages={messages}
+          interruptPending={interruptPending}
+          onApproveResume={(action, editedSql) =>
+            approveResume(action, editedSql, runtimeSelection)
+          }
+          isResuming={isLoading}
+        />
 
         {/* Input bar */}
         <Box
@@ -163,7 +243,10 @@ function App() {
           }}
         >
           <Box sx={{ maxWidth: 860, mx: 'auto' }}>
-            <ChatInput onSend={sendMessage} disabled={isLoading} />
+            <ChatInput
+              onSend={(query) => sendMessage(query, runtimeSelection)}
+              disabled={isLoading || !!interruptPending}
+            />
           </Box>
         </Box>
       </Box>
@@ -176,6 +259,17 @@ function App() {
           errorMessage={authRequired ? 'Session expired. Please log in.' : undefined}
         />
       )}
+
+      <AgentConfigDialog
+        open={agentConfigOpen}
+        config={agentConfig}
+        sessionSelection={currentSessionSelection}
+        isSaving={agentConfigLoading}
+        error={agentConfigError}
+        onClose={() => setAgentConfigOpen(false)}
+        onSave={saveAgentConfig}
+        onApplyToSession={applyAgentConfigToCurrentSession}
+      />
 
       {/* ── Error Snackbar ───────────────────────────────────────────── */}
       <Snackbar

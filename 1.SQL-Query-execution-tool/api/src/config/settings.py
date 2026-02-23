@@ -5,6 +5,15 @@ from pydantic import field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
+def _parse_list_env(v: object) -> list[str]:
+    """Parse env value to list of stripped non-empty strings."""
+    if isinstance(v, list):
+        return v
+    if isinstance(v, str):
+        return [x.strip() for x in v.split(",") if x.strip()]
+    return []
+
+
 class Settings(BaseSettings):
     model_config = SettingsConfigDict(
         env_file=".env",
@@ -54,17 +63,51 @@ class Settings(BaseSettings):
     redis_db: int = 0
     redis_ttl_seconds: int = 3600
 
+    # Checkpointer (memory | redis; redis requires langgraph-checkpoint-redis)
+    checkpointer_type: str = "memory"
+
     # LLM
     llm_provider: str = "openai"
     llm_model: str = "gpt-4o"
+    llm_lightweight_model: str = "gpt-4o-mini"
+    llm_advanced_model: str = "gpt-4o"
     llm_api_key: str = ""
     llm_base_url: str = ""
     llm_max_tokens: int = 4096
     llm_temperature: float = 0.0
+    model_switch_enabled: bool = True
+    model_switch_message_threshold: int = 12
 
     # DeepAgent
     deepagent_max_iterations: int = 10
     deepagent_timeout_seconds: int = 120
+    hitl_max_replans: int = 3
+
+    # Skills (Part II: agent tool registry + SKILL.md loader)
+    enabled_skills: Union[str, list[str]] = []
+    skill_dirs: Union[str, list[str]] = []
+
+    # MCP (Part II: agent calls external MCP tools)
+    mcp_servers: Union[str, list[str]] = []
+
+    # MCP server (expose this app as MCP; Part II Phase D)
+    mcp_server_enabled: bool = True
+    mcp_mount_path: str = "mcp"
+
+    @field_validator("enabled_skills", mode="before")
+    @classmethod
+    def parse_enabled_skills(cls, v: object) -> list[str]:
+        return _parse_list_env(v)
+
+    @field_validator("skill_dirs", mode="before")
+    @classmethod
+    def parse_skill_dirs(cls, v: object) -> list[str]:
+        return _parse_list_env(v)
+
+    @field_validator("mcp_servers", mode="before")
+    @classmethod
+    def parse_mcp_servers(cls, v: object) -> list[str]:
+        return _parse_list_env(v)
 
     # JWT Auth
     auth_enabled: bool = False
