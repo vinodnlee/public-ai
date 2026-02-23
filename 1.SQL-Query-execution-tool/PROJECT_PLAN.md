@@ -416,3 +416,4 @@ After each subtask: git commit, then add one row below with date, task id, and c
 | 2026-02-23 | C.3 follow-up: support standard `mcpServers` JSON transport config in MCP client | f0481e3 |
 | 2026-02-23 | C.3 bugfix: pass JSON MCP configs as full `mcpServers` object to fastmcp client | 8d81c9e |
 | 2026-02-23 | C.3 bugfix: default `new_page.url` to `about:blank` when omitted by model | ef0cab0 |
+| 2026-02-23 | C.3 bugfix: reuse shared MCP client/session per transport to avoid profile lock conflicts | dc6c632 |
