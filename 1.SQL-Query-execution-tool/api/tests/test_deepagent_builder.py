@@ -30,6 +30,7 @@ def test_build_supervisor_graph_includes_schema_tool(
     adapter, semantic_layer, captured_events, checkpointer = mock_deps
     with patch("src.agent.deepagent_builder.get_settings") as m_get:
         m_get.return_value.enabled_skills = []
+        m_get.return_value.model_switch_enabled = False
         with patch("src.agent.deepagent_builder.create_deep_agent") as m_create:
             m_create.return_value = MagicMock()
             build_supervisor_graph(adapter, semantic_layer, captured_events, checkpointer)
@@ -50,6 +51,7 @@ def test_build_supervisor_graph_includes_enabled_skill_tools(
     assert len(skill_tools) >= 1, "export_csv skill should be registered and provide at least one tool"
     with patch("src.agent.deepagent_builder.get_settings") as m_get:
         m_get.return_value.enabled_skills = ["export_csv"]
+        m_get.return_value.model_switch_enabled = False
         with patch("src.agent.deepagent_builder.create_deep_agent") as m_create:
             m_create.return_value = MagicMock()
             build_supervisor_graph(adapter, semantic_layer, captured_events, checkpointer)
@@ -75,6 +77,7 @@ def test_build_supervisor_graph_injects_skill_docs_into_prompt(
     with patch("src.agent.deepagent_builder.get_settings") as m_get:
         m_get.return_value.enabled_skills = []
         m_get.return_value.skill_dirs = ["/some/dir"]
+        m_get.return_value.model_switch_enabled = False
         with patch("src.agent.deepagent_builder.load_skills_from_dirs", return_value=[fake_doc]):
             with patch("src.agent.deepagent_builder.create_deep_agent") as m_create:
                 m_create.return_value = MagicMock()
@@ -97,6 +100,7 @@ def test_build_supervisor_graph_includes_mcp_tools_when_returned(
     with patch("src.agent.deepagent_builder.get_settings") as m_get:
         m_get.return_value.enabled_skills = []
         m_get.return_value.skill_dirs = []
+        m_get.return_value.model_switch_enabled = False
         with patch("src.agent.deepagent_builder.get_mcp_tools_for_supervisor") as m_mcp:
             m_mcp.return_value = [mock_mcp_tool]
             with patch("src.agent.deepagent_builder.create_deep_agent") as m_create:

@@ -26,7 +26,7 @@ def build_dynamic_model_switch_middleware(settings: Any):
     threshold = int(getattr(settings, "model_switch_message_threshold", 12))
 
     @wrap_model_call
-    def dynamic_model_switch(
+    async def dynamic_model_switch(
         request: ModelRequest,
         handler,
     ) -> ModelResponse:
@@ -44,6 +44,6 @@ def build_dynamic_model_switch_middleware(settings: Any):
             threshold,
             selected_name,
         )
-        return handler(request.override(model=selected_model))
+        return await handler(request.override(model=selected_model))
 
     return dynamic_model_switch
