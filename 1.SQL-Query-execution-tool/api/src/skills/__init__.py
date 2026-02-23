@@ -5,6 +5,7 @@ from src.skills.registry import (
     SkillTarget,
     register_skill,
     resolve_skill,
+    list_registered_skills,
     get_tools_for_target,
     clear_registry,
 )
@@ -19,6 +20,7 @@ __all__ = [
     "SkillTarget",
     "register_skill",
     "resolve_skill",
+    "list_registered_skills",
     "get_tools_for_target",
     "clear_registry",
     "SkillDoc",

@@ -27,3 +27,23 @@ class ApproveInitResponse(BaseModel):
     """Response with new stream URL to consume continuation after approve."""
 
     stream_url: str
+
+
+class SkillMeta(BaseModel):
+    id: str
+    name: str
+    description: str
+    target: str
+
+
+class AgentConfigResponse(BaseModel):
+    enabled_skills: list[str]
+    skill_dirs: list[str]
+    mcp_servers: list[str]
+    available_skills: list[SkillMeta]
+
+
+class AgentConfigUpdateRequest(BaseModel):
+    enabled_skills: list[str] | None = None
+    skill_dirs: list[str] | None = None
+    mcp_servers: list[str] | None = None

@@ -15,6 +15,7 @@ from src.tools.get_schema_context import get_schema_context_tool
 from src.skills import get_tools_for_target, load_skills_from_dirs
 from src.skills.registry import SkillTarget
 from src.mcp.client import get_mcp_tools_for_supervisor
+from src.config.runtime_overrides import get_agent_runtime_config
 
 logger = get_logger(__name__)
 
@@ -48,15 +49,21 @@ def build_supervisor_graph(
         return await get_schema_context_tool.coroutine(semantic_layer=semantic_layer)
 
     settings = get_settings()
-    skill_docs = load_skills_from_dirs(settings.skill_dirs)
+    runtime = get_agent_runtime_config(settings)
+    skill_docs = load_skills_from_dirs(runtime.skill_dirs)
     skills_section = _format_skills_section(skill_docs)
     supervisor_prompt = SUPERVISOR_PROMPT_TEMPLATE.format(
         dialect=adapter.dialect,
         skills_section=skills_section,
     )
 
-    skill_tools = get_tools_for_target(settings.enabled_skills, SkillTarget.SUPERVISOR)
-    mcp_tools = get_mcp_tools_for_supervisor(settings)
+    skill_tools = get_tools_for_target(runtime.enabled_skills, SkillTarget.SUPERVISOR)
+    runtime_settings = type(
+        "RuntimeSettings",
+        (),
+        {"mcp_servers": runtime.mcp_servers},
+    )()
+    mcp_tools = get_mcp_tools_for_supervisor(runtime_settings)
     tools = [get_schema_context] + skill_tools + mcp_tools
 
     logger.debug("Building supervisor graph with schema tool and %d skill tools", len(skill_tools))

@@ -52,3 +52,8 @@ def get_tools_for_target(enabled_skill_ids: list[str], target: SkillTarget) -> l
 def clear_registry() -> None:
     """Clear all registered skills. Intended for tests."""
     _registry.clear()
+
+
+def list_registered_skills() -> list[Skill]:
+    """Return all registered skills."""
+    return list(_registry.values())

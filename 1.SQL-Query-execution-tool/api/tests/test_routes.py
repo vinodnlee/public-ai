@@ -122,3 +122,29 @@ def test_approve_edit_accepts_edited_sql(client: TestClient) -> None:
     )
     assert resp.status_code == 200
     assert "stream_url" in resp.json()
+
+
+def test_agent_config_get_returns_expected_shape(client: TestClient) -> None:
+    resp = client.get("/api/agent-config")
+    assert resp.status_code == 200
+    data = resp.json()
+    assert "enabled_skills" in data
+    assert "skill_dirs" in data
+    assert "mcp_servers" in data
+    assert "available_skills" in data
+
+
+def test_agent_config_put_updates_runtime_values(client: TestClient) -> None:
+    resp = client.put(
+        "/api/agent-config",
+        json={
+            "enabled_skills": ["export_csv"],
+            "skill_dirs": ["C:/skills"],
+            "mcp_servers": ["http://localhost:9123/mcp"],
+        },
+    )
+    assert resp.status_code == 200
+    data = resp.json()
+    assert data["enabled_skills"] == ["export_csv"]
+    assert data["skill_dirs"] == ["C:/skills"]
+    assert data["mcp_servers"] == ["http://localhost:9123/mcp"]
