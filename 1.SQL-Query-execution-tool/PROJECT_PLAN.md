@@ -418,3 +418,4 @@ After each subtask: git commit, then add one row below with date, task id, and c
 | 2026-02-23 | C.3 bugfix: default `new_page.url` to `about:blank` when omitted by model | ef0cab0 |
 | 2026-02-23 | C.3 bugfix: reuse shared MCP client/session per transport to avoid profile lock conflicts | dc6c632 |
 | 2026-02-24 | C.3 bugfix: map MCP `fill` text-like args to required `value` parameter | 1e98e35 |
+| 2026-02-24 | C.4 follow-up: persist user MCP/Skill defaults without expiry (configurable TTL) | a1f7b7f |
