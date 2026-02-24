@@ -126,6 +126,11 @@ def _normalize_mcp_arguments(name: str, arguments: dict[str, Any] | None) -> dic
     if name == "new_page" and not args.get("url"):
         # chrome-devtools-mcp requires url for new_page.
         args["url"] = "about:blank"
+    if name == "fill" and not args.get("value"):
+        # Some models send text/content/input for fill tools.
+        candidate = args.get("text") or args.get("content") or args.get("input")
+        if isinstance(candidate, str) and candidate:
+            args["value"] = candidate
     return args
 
 

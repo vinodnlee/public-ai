@@ -104,6 +104,15 @@ def test_normalize_mcp_arguments_sets_default_url_for_new_page() -> None:
     assert _normalize_mcp_arguments("goto", {}) == {}
 
 
+def test_normalize_mcp_arguments_maps_fill_text_to_value() -> None:
+    args = _normalize_mcp_arguments(
+        "fill",
+        {"selector": "input[name='wd']", "text": "codex"},
+    )
+    assert args["selector"] == "input[name='wd']"
+    assert args["value"] == "codex"
+
+
 @pytest.mark.asyncio
 async def test_make_call_tool_reuses_same_client_for_same_server() -> None:
     server = {"mcpServers": {"chrome-devtools": {"command": "npx", "args": ["-y", "chrome-devtools-mcp@latest", "--isolated"]}}}
