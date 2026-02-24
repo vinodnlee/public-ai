@@ -66,9 +66,10 @@ async def set_user_agent_config(
         current["mcp_servers"] = _normalize_list(mcp_servers)
 
     settings = get_settings()
-    await client.setex(
-        f"{_KEY_PREFIX}{user_sub}",
-        settings.redis_ttl_seconds,
-        json.dumps(current),
-    )
+    key = f"{_KEY_PREFIX}{user_sub}"
+    ttl_seconds = int(getattr(settings, "user_agent_config_ttl_seconds", 0) or 0)
+    if ttl_seconds > 0:
+        await client.setex(key, ttl_seconds, json.dumps(current))
+    else:
+        await client.set(key, json.dumps(current))
     return current

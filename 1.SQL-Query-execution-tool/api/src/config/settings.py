@@ -62,6 +62,7 @@ class Settings(BaseSettings):
     redis_port: int = 6379
     redis_db: int = 0
     redis_ttl_seconds: int = 3600
+    user_agent_config_ttl_seconds: int = 0
 
     # Checkpointer (memory | redis; redis requires langgraph-checkpoint-redis)
     checkpointer_type: str = "memory"
